@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Read(//Users/abdulbasit/Desktop/Flutter/**)"
+      "Read(//Users/abdulbasit/Desktop/Flutter/**)",
+      "Bash(flutter pub get:*)",
+      "Bash(dart run build_runner build:*)",
+      "Bash(flutter analyze:*)"
     ]
   }
 }
