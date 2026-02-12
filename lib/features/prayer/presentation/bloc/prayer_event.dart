@@ -1,27 +1,31 @@
-part of 'prayer_bloc.dart';
+import 'package:equatable/equatable.dart';
 
 sealed class PrayerEvent extends Equatable {
   const PrayerEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
-class LoadPrayerLog extends PrayerEvent {
-  final DateTime date;
+class LoadPrayerTimesRequested extends PrayerEvent {
+  final String? city;
+  final String? country;
 
-  const LoadPrayerLog(this.date);
+  const LoadPrayerTimesRequested({this.city, this.country});
 
   @override
-  List<Object> get props => [date];
+  List<Object?> get props => [city, country];
 }
 
 class TogglePrayerRequested extends PrayerEvent {
   final String prayerName;
-  final DateTime date;
 
-  const TogglePrayerRequested({required this.prayerName, required this.date});
+  const TogglePrayerRequested(this.prayerName);
 
   @override
-  List<Object> get props => [prayerName, date];
+  List<Object> get props => [prayerName];
+}
+
+class LoadPrayerStreakRequested extends PrayerEvent {
+  const LoadPrayerStreakRequested();
 }

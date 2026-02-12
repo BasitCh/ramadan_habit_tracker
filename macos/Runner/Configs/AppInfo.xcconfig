@@ -8,7 +8,7 @@
 PRODUCT_NAME = ramadan_habit_tracker
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.ramadanHabitTracker
+PRODUCT_BUNDLE_IDENTIFIER = com.bytse.ramadanHabitTracker
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.bytse. All rights reserved.

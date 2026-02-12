@@ -8,7 +8,7 @@ part of 'prayer_log_model.dart';
 
 class PrayerLogModelAdapter extends TypeAdapter<PrayerLogModel> {
   @override
-  final int typeId = 2;
+  final int typeId = 12;
 
   @override
   PrayerLogModel read(BinaryReader reader) {
@@ -17,8 +17,8 @@ class PrayerLogModelAdapter extends TypeAdapter<PrayerLogModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return PrayerLogModel(
-      date: fields[0] as DateTime,
-      prayers: (fields[1] as Map).cast<String, bool>(),
+      dateKey: fields[0] as String,
+      completedPrayers: (fields[1] as Map).cast<String, bool>(),
     );
   }
 
@@ -27,9 +27,9 @@ class PrayerLogModelAdapter extends TypeAdapter<PrayerLogModel> {
     writer
       ..writeByte(2)
       ..writeByte(0)
-      ..write(obj.date)
+      ..write(obj.dateKey)
       ..writeByte(1)
-      ..write(obj.prayers);
+      ..write(obj.completedPrayers);
   }
 
   @override

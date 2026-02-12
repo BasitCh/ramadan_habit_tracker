@@ -3,30 +3,44 @@ import 'package:ramadan_habit_tracker/features/prayer/domain/entities/prayer_log
 
 part 'prayer_log_model.g.dart';
 
-@HiveType(typeId: 2)
+@HiveType(typeId: 12)
 class PrayerLogModel extends HiveObject {
   @HiveField(0)
-  final DateTime date;
+  final String dateKey; // "yyyy-MM-dd"
 
   @HiveField(1)
-  final Map<String, bool> prayers;
+  final Map<String, bool> completedPrayers;
 
   PrayerLogModel({
-    required this.date,
-    required this.prayers,
+    required this.dateKey,
+    required this.completedPrayers,
   });
 
-  factory PrayerLogModel.fromEntity(PrayerLog log) {
+  factory PrayerLogModel.fromEntity(PrayerLog entity) {
     return PrayerLogModel(
-      date: log.date,
-      prayers: Map<String, bool>.from(log.prayers),
+      dateKey: '${entity.date.year}-${entity.date.month.toString().padLeft(2, '0')}-${entity.date.day.toString().padLeft(2, '0')}',
+      completedPrayers: Map<String, bool>.from(entity.completedPrayers),
     );
   }
 
   PrayerLog toEntity() {
+    final parts = dateKey.split('-');
     return PrayerLog(
-      date: date,
-      prayers: Map<String, bool>.from(prayers),
+      date: DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2])),
+      completedPrayers: Map<String, bool>.from(completedPrayers),
+    );
+  }
+
+  factory PrayerLogModel.empty(String dateKey) {
+    return PrayerLogModel(
+      dateKey: dateKey,
+      completedPrayers: {
+        'Fajr': false,
+        'Dhuhr': false,
+        'Asr': false,
+        'Maghrib': false,
+        'Isha': false,
+      },
     );
   }
 }

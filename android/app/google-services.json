@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "46184057398",
+    "project_id": "noor-planner-app",
+    "storage_bucket": "noor-planner-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:46184057398:android:7cb2e7cf47e82f23a1e697",
+        "android_client_info": {
+          "package_name": "com.bytse.ramadan_habit_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNNJfPyFpUfe11842b3YntSHqqABPrCiM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

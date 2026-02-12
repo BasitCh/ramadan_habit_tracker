@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ramadan_habit_tracker/app/router/app_router.dart';
 import 'package:ramadan_habit_tracker/app/theme/app_theme.dart';
 import 'package:ramadan_habit_tracker/di/injection_container.dart';
-import 'package:ramadan_habit_tracker/features/dhikr/presentation/bloc/dhikr_bloc.dart';
-import 'package:ramadan_habit_tracker/features/fasting/presentation/bloc/fasting_bloc.dart';
-import 'package:ramadan_habit_tracker/features/habits/presentation/bloc/habit_bloc.dart';
+import 'package:ramadan_habit_tracker/features/adhkar/presentation/bloc/adhkar_bloc.dart';
+import 'package:ramadan_habit_tracker/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:ramadan_habit_tracker/features/dua/presentation/bloc/dua_bloc.dart';
 import 'package:ramadan_habit_tracker/features/prayer/presentation/bloc/prayer_bloc.dart';
 import 'package:ramadan_habit_tracker/features/quran/presentation/bloc/quran_bloc.dart';
 
@@ -16,25 +16,24 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<HabitBloc>(
-          create: (_) => sl<HabitBloc>()..add(const LoadHabits()),
+        BlocProvider<AuthBloc>(
+          create: (_) => sl<AuthBloc>(),
         ),
         BlocProvider<PrayerBloc>(
-          create: (_) => sl<PrayerBloc>()..add(LoadPrayerLog(DateTime.now())),
+          create: (_) => sl<PrayerBloc>(),
         ),
         BlocProvider<QuranBloc>(
-          create: (_) =>
-              sl<QuranBloc>()..add(LoadQuranProgress(DateTime.now())),
+          create: (_) => sl<QuranBloc>(),
         ),
-        BlocProvider<FastingBloc>(
-          create: (_) => sl<FastingBloc>()..add(const LoadFastingLogs()),
+        BlocProvider<DuaBloc>(
+          create: (_) => sl<DuaBloc>(),
         ),
-        BlocProvider<DhikrBloc>(
-          create: (_) => sl<DhikrBloc>()..add(const LoadDhikrList()),
+        BlocProvider<AdhkarBloc>(
+          create: (_) => sl<AdhkarBloc>(),
         ),
       ],
       child: MaterialApp.router(
-        title: 'Ramadan Habit Tracker',
+        title: 'Noor Planner',
         theme: AppTheme.light,
         routerConfig: AppRouter.router,
         debugShowCheckedModeBanner: false,

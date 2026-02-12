@@ -4,7 +4,13 @@
       "Read(//Users/abdulbasit/Desktop/Flutter/**)",
       "Bash(flutter pub get:*)",
       "Bash(dart run build_runner build:*)",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(firebase projects:delete:*)",
+      "Bash(export NVM_DIR=\"$HOME/.nvm\")",
+      "Bash([ -s \"$NVM_DIR/nvm.sh\" ])",
+      "Bash(. \"$NVM_DIR/nvm.sh\")",
+      "Bash(nvm use:*)",
+      "Bash(flutterfire:*)"
     ]
   }
 }

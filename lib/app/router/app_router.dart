@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ramadan_habit_tracker/features/dashboard/presentation/pages/dashboard_page.dart';
-import 'package:ramadan_habit_tracker/features/dhikr/presentation/pages/dhikr_counter_page.dart';
-import 'package:ramadan_habit_tracker/features/fasting/presentation/pages/fasting_page.dart';
-import 'package:ramadan_habit_tracker/features/habits/presentation/pages/habits_page.dart';
-import 'package:ramadan_habit_tracker/features/prayer/presentation/pages/prayer_tracker_page.dart';
+import 'package:ramadan_habit_tracker/app/theme/app_colors.dart';
+import 'package:ramadan_habit_tracker/features/adhkar/presentation/pages/adhkar_page.dart';
+import 'package:ramadan_habit_tracker/features/auth/presentation/pages/otp_verification_page.dart';
+import 'package:ramadan_habit_tracker/features/auth/presentation/pages/phone_login_page.dart';
+import 'package:ramadan_habit_tracker/features/dua/presentation/pages/dua_of_day_page.dart';
+import 'package:ramadan_habit_tracker/features/home/presentation/pages/home_page.dart';
+import 'package:ramadan_habit_tracker/features/prayer/presentation/pages/salah_tracker_page.dart';
+import 'package:ramadan_habit_tracker/features/profile/presentation/pages/profile_page.dart';
 import 'package:ramadan_habit_tracker/features/quran/presentation/pages/quran_progress_page.dart';
+import 'package:ramadan_habit_tracker/features/splash/presentation/pages/splash_page.dart';
 
 class AppRouter {
   AppRouter._();
@@ -15,22 +19,37 @@ class AppRouter {
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/',
+    initialLocation: '/splash',
     routes: [
+      // ── Public Routes ──────────────────────────────────────────────────
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashPage(),
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const PhoneLoginPage(),
+      ),
+      GoRoute(
+        path: '/verify-otp',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, String>? ?? {};
+          return OtpVerificationPage(
+            verificationId: extra['verificationId'] ?? '',
+            phoneNumber: extra['phoneNumber'] ?? '',
+          );
+        },
+      ),
+
+      // ── Protected Routes with Bottom Nav ───────────────────────────────
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) => _ScaffoldWithNav(child: child),
         routes: [
           GoRoute(
-            path: '/',
+            path: '/home',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: DashboardPage(),
-            ),
-          ),
-          GoRoute(
-            path: '/prayers',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: PrayerTrackerPage(),
+              child: HomePage(),
             ),
           ),
           GoRoute(
@@ -40,25 +59,28 @@ class AppRouter {
             ),
           ),
           GoRoute(
-            path: '/more',
+            path: '/dua',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: _MorePage(),
+              child: DuaOfDayPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/profile',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: ProfilePage(),
             ),
           ),
         ],
       ),
-      // Full-screen routes (outside bottom nav)
+
+      // ── Full-Screen Routes ─────────────────────────────────────────────
       GoRoute(
-        path: '/habits',
-        builder: (context, state) => const HabitsPage(),
+        path: '/salah',
+        builder: (context, state) => const SalahTrackerPage(),
       ),
       GoRoute(
-        path: '/fasting',
-        builder: (context, state) => const FastingPage(),
-      ),
-      GoRoute(
-        path: '/dhikr',
-        builder: (context, state) => const DhikrCounterPage(),
+        path: '/adhkar',
+        builder: (context, state) => const AdhkarPage(),
       ),
     ],
   );
@@ -71,9 +93,9 @@ class _ScaffoldWithNav extends StatelessWidget {
 
   int _currentIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
-    if (location.startsWith('/prayers')) return 1;
-    if (location.startsWith('/quran')) return 2;
-    if (location.startsWith('/more')) return 3;
+    if (location.startsWith('/quran')) return 1;
+    if (location.startsWith('/dua')) return 2;
+    if (location.startsWith('/profile')) return 3;
     return 0;
   }
 
@@ -81,74 +103,44 @@ class _ScaffoldWithNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex(context),
-        onTap: (index) {
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex(context),
+        onDestinationSelected: (index) {
           switch (index) {
             case 0:
-              context.go('/');
+              context.go('/home');
             case 1:
-              context.go('/prayers');
-            case 2:
               context.go('/quran');
+            case 2:
+              context.go('/dua');
             case 3:
-              context.go('/more');
+              context.go('/profile');
           }
         },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: AppColors.primary.withValues(alpha: 0.2),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home, color: AppColors.primaryDark),
+            label: 'Home',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.mosque),
-            label: 'Prayers',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book),
+          NavigationDestination(
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book, color: AppColors.primaryDark),
             label: 'Quran',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.more_horiz),
-            label: 'More',
+          NavigationDestination(
+            icon: Icon(Icons.favorite_outline),
+            selectedIcon: Icon(Icons.favorite, color: AppColors.primaryDark),
+            label: 'Dua',
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MorePage extends StatelessWidget {
-  const _MorePage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('More')),
-      body: ListView(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.checklist),
-            title: const Text('My Habits'),
-            subtitle: const Text('Track custom daily habits'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/habits'),
-          ),
-          const Divider(height: 1),
-          ListTile(
-            leading: const Icon(Icons.restaurant),
-            title: const Text('Fasting Tracker'),
-            subtitle: const Text('Log your daily fasts'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/fasting'),
-          ),
-          const Divider(height: 1),
-          ListTile(
-            leading: const Icon(Icons.touch_app),
-            title: const Text('Dhikr Counter'),
-            subtitle: const Text('Count your daily dhikr'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/dhikr'),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person, color: AppColors.primaryDark),
+            label: 'Profile',
           ),
         ],
       ),

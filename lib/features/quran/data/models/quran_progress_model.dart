@@ -3,36 +3,44 @@ import 'package:ramadan_habit_tracker/features/quran/domain/entities/quran_progr
 
 part 'quran_progress_model.g.dart';
 
-@HiveType(typeId: 3)
+@HiveType(typeId: 13)
 class QuranProgressModel extends HiveObject {
   @HiveField(0)
-  final DateTime date;
+  final int currentPage;
 
   @HiveField(1)
-  final int currentJuz;
+  final int pagesReadToday;
 
   @HiveField(2)
-  final int pagesRead;
+  final int lastReadTimestamp;
 
   QuranProgressModel({
-    required this.date,
-    required this.currentJuz,
-    required this.pagesRead,
+    required this.currentPage,
+    required this.pagesReadToday,
+    required this.lastReadTimestamp,
   });
 
-  factory QuranProgressModel.fromEntity(QuranProgress progress) {
+  factory QuranProgressModel.initial() {
     return QuranProgressModel(
-      date: progress.date,
-      currentJuz: progress.currentJuz,
-      pagesRead: progress.pagesRead,
+      currentPage: 0,
+      pagesReadToday: 0,
+      lastReadTimestamp: DateTime.now().millisecondsSinceEpoch,
     );
   }
 
   QuranProgress toEntity() {
     return QuranProgress(
-      date: date,
-      currentJuz: currentJuz,
-      pagesRead: pagesRead,
+      currentPage: currentPage,
+      pagesReadToday: pagesReadToday,
+      lastReadDate: DateTime.fromMillisecondsSinceEpoch(lastReadTimestamp),
+    );
+  }
+
+  factory QuranProgressModel.fromEntity(QuranProgress entity) {
+    return QuranProgressModel(
+      currentPage: entity.currentPage,
+      pagesReadToday: entity.pagesReadToday,
+      lastReadTimestamp: entity.lastReadDate.millisecondsSinceEpoch,
     );
   }
 }

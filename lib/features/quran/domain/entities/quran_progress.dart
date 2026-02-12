@@ -1,24 +1,20 @@
 import 'package:equatable/equatable.dart';
 
 class QuranProgress extends Equatable {
-  final DateTime date;
-  final int currentJuz;
-  final int pagesRead;
+  final int currentPage;
+  final int pagesReadToday;
+  final DateTime lastReadDate;
 
   const QuranProgress({
-    required this.date,
-    required this.currentJuz,
-    required this.pagesRead,
+    required this.currentPage,
+    required this.pagesReadToday,
+    required this.lastReadDate,
   });
 
-  QuranProgress copyWith({int? currentJuz, int? pagesRead}) {
-    return QuranProgress(
-      date: date,
-      currentJuz: currentJuz ?? this.currentJuz,
-      pagesRead: pagesRead ?? this.pagesRead,
-    );
-  }
+  int get currentJuz => (currentPage / 20).ceil().clamp(1, 30);
+  double get overallProgress => currentPage / 604;
+  double get juzProgress => (currentPage % 20) / 20;
 
   @override
-  List<Object> get props => [date, currentJuz, pagesRead];
+  List<Object?> get props => [currentPage, pagesReadToday, lastReadDate];
 }

@@ -8,7 +8,7 @@ part of 'quran_progress_model.dart';
 
 class QuranProgressModelAdapter extends TypeAdapter<QuranProgressModel> {
   @override
-  final int typeId = 3;
+  final int typeId = 13;
 
   @override
   QuranProgressModel read(BinaryReader reader) {
@@ -17,9 +17,9 @@ class QuranProgressModelAdapter extends TypeAdapter<QuranProgressModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return QuranProgressModel(
-      date: fields[0] as DateTime,
-      currentJuz: fields[1] as int,
-      pagesRead: fields[2] as int,
+      currentPage: fields[0] as int,
+      pagesReadToday: fields[1] as int,
+      lastReadTimestamp: fields[2] as int,
     );
   }
 
@@ -28,11 +28,11 @@ class QuranProgressModelAdapter extends TypeAdapter<QuranProgressModel> {
     writer
       ..writeByte(3)
       ..writeByte(0)
-      ..write(obj.date)
+      ..write(obj.currentPage)
       ..writeByte(1)
-      ..write(obj.currentJuz)
+      ..write(obj.pagesReadToday)
       ..writeByte(2)
-      ..write(obj.pagesRead);
+      ..write(obj.lastReadTimestamp);
   }
 
   @override

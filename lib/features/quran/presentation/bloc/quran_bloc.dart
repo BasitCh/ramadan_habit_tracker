@@ -1,61 +1,87 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ramadan_habit_tracker/core/usecases/usecase.dart';
 import 'package:ramadan_habit_tracker/features/quran/domain/entities/quran_progress.dart';
 import 'package:ramadan_habit_tracker/features/quran/domain/usecases/get_quran_progress.dart';
-import 'package:ramadan_habit_tracker/features/quran/domain/usecases/update_quran_progress.dart';
+import 'package:ramadan_habit_tracker/features/quran/domain/usecases/update_pages_read.dart';
 
-part 'quran_event.dart';
-part 'quran_state.dart';
+// ── Events ──────────────────────────────────────────────────────────────────
+
+sealed class QuranEvent extends Equatable {
+  const QuranEvent();
+  @override
+  List<Object?> get props => [];
+}
+
+class LoadQuranProgressRequested extends QuranEvent {
+  const LoadQuranProgressRequested();
+}
+
+class UpdatePagesReadRequested extends QuranEvent {
+  final int pages;
+  const UpdatePagesReadRequested(this.pages);
+  @override
+  List<Object> get props => [pages];
+}
+
+// ── States ──────────────────────────────────────────────────────────────────
+
+sealed class QuranState extends Equatable {
+  const QuranState();
+  @override
+  List<Object?> get props => [];
+}
+
+class QuranInitial extends QuranState {
+  const QuranInitial();
+}
+
+class QuranLoading extends QuranState {
+  const QuranLoading();
+}
+
+class QuranLoaded extends QuranState {
+  final QuranProgress progress;
+  const QuranLoaded(this.progress);
+  @override
+  List<Object> get props => [progress];
+}
+
+class QuranError extends QuranState {
+  final String message;
+  const QuranError(this.message);
+  @override
+  List<Object> get props => [message];
+}
+
+// ── Bloc ────────────────────────────────────────────────────────────────────
 
 class QuranBloc extends Bloc<QuranEvent, QuranState> {
   final GetQuranProgress getQuranProgress;
-  final UpdateQuranProgress updateQuranProgress;
+  final UpdatePagesRead updatePagesRead;
 
   QuranBloc({
     required this.getQuranProgress,
-    required this.updateQuranProgress,
+    required this.updatePagesRead,
   }) : super(const QuranInitial()) {
-    on<LoadQuranProgress>(_onLoadProgress);
-    on<UpdateJuz>(_onUpdateJuz);
-    on<UpdatePagesRead>(_onUpdatePages);
+    on<LoadQuranProgressRequested>(_onLoad);
+    on<UpdatePagesReadRequested>(_onUpdate);
   }
 
-  Future<void> _onLoadProgress(
-    LoadQuranProgress event,
-    Emitter<QuranState> emit,
-  ) async {
+  Future<void> _onLoad(LoadQuranProgressRequested event, Emitter<QuranState> emit) async {
     emit(const QuranLoading());
-    final result = await getQuranProgress(event.date);
+    final result = await getQuranProgress(const NoParams());
     result.fold(
-      (failure) => emit(QuranError(failure.message)),
-      (progress) => emit(QuranLoaded(progress)),
+      (f) => emit(QuranError(f.message)),
+      (p) => emit(QuranLoaded(p)),
     );
   }
 
-  Future<void> _onUpdateJuz(UpdateJuz event, Emitter<QuranState> emit) async {
-    final currentState = state;
-    if (currentState is QuranLoaded) {
-      final updated = currentState.progress.copyWith(currentJuz: event.juz);
-      final result = await updateQuranProgress(updated);
-      result.fold(
-        (failure) => emit(QuranError(failure.message)),
-        (progress) => emit(QuranLoaded(progress)),
-      );
-    }
-  }
-
-  Future<void> _onUpdatePages(
-    UpdatePagesRead event,
-    Emitter<QuranState> emit,
-  ) async {
-    final currentState = state;
-    if (currentState is QuranLoaded) {
-      final updated = currentState.progress.copyWith(pagesRead: event.pages);
-      final result = await updateQuranProgress(updated);
-      result.fold(
-        (failure) => emit(QuranError(failure.message)),
-        (progress) => emit(QuranLoaded(progress)),
-      );
-    }
+  Future<void> _onUpdate(UpdatePagesReadRequested event, Emitter<QuranState> emit) async {
+    final result = await updatePagesRead(UpdatePagesParams(pages: event.pages));
+    result.fold(
+      (f) => emit(QuranError(f.message)),
+      (p) => emit(QuranLoaded(p)),
+    );
   }
 }
