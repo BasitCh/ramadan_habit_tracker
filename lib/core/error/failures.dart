@@ -24,3 +24,7 @@ class AuthFailure extends Failure {
 class ServerFailure extends Failure {
   const ServerFailure([super.message = 'Server operation failed']);
 }
+
+class LocationFailure extends Failure {
+  const LocationFailure([super.message = 'Location unavailable']);
+}

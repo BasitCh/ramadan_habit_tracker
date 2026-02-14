@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:ramadan_habit_tracker/features/prayer/domain/entities/hijri_date.dart';
 import 'package:ramadan_habit_tracker/features/prayer/domain/entities/prayer_log.dart';
 import 'package:ramadan_habit_tracker/features/prayer/domain/entities/prayer_streak.dart';
 import 'package:ramadan_habit_tracker/features/prayer/domain/entities/prayer_time.dart';
@@ -23,12 +24,16 @@ class PrayerLoaded extends PrayerState {
   final PrayerLog prayerLog;
   final PrayerStreak? streak;
   final String? nextPrayerCountdown;
+  final HijriDate? hijriDate;
+  final String? locationLabel;
 
   const PrayerLoaded({
     required this.prayerTimes,
     required this.prayerLog,
     this.streak,
     this.nextPrayerCountdown,
+    this.hijriDate,
+    this.locationLabel,
   });
 
   PrayerLoaded copyWith({
@@ -36,17 +41,28 @@ class PrayerLoaded extends PrayerState {
     PrayerLog? prayerLog,
     PrayerStreak? streak,
     String? nextPrayerCountdown,
+    HijriDate? hijriDate,
+    String? locationLabel,
   }) {
     return PrayerLoaded(
       prayerTimes: prayerTimes ?? this.prayerTimes,
       prayerLog: prayerLog ?? this.prayerLog,
       streak: streak ?? this.streak,
       nextPrayerCountdown: nextPrayerCountdown ?? this.nextPrayerCountdown,
+      hijriDate: hijriDate ?? this.hijriDate,
+      locationLabel: locationLabel ?? this.locationLabel,
     );
   }
 
   @override
-  List<Object?> get props => [prayerTimes, prayerLog, streak, nextPrayerCountdown];
+  List<Object?> get props => [
+        prayerTimes,
+        prayerLog,
+        streak,
+        nextPrayerCountdown,
+        hijriDate,
+        locationLabel,
+      ];
 }
 
 class PrayerError extends PrayerState {

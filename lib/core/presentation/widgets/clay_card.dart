@@ -33,15 +33,15 @@ class ClayCard extends StatelessWidget {
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color ?? AppColors.surfaceCard,
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
+        borderRadius: borderRadius ?? BorderRadius.circular(24),
         border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.1),
+          color: AppColors.secondary.withValues(alpha: 0.08),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowDark.withValues(alpha: 0.15),
-            blurRadius: 20,
+            color: AppColors.secondary.withValues(alpha: 0.08),
+            blurRadius: 30,
             offset: const Offset(0, 8),
           ),
           BoxShadow(
@@ -57,7 +57,7 @@ class ClayCard extends StatelessWidget {
     if (onTap != null) {
       return InkWell(
         onTap: onTap,
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
+        borderRadius: borderRadius ?? BorderRadius.circular(24),
         child: card,
       );
     }

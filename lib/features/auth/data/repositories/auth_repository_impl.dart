@@ -1,4 +1,6 @@
 import 'package:dartz/dartz.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:ramadan_habit_tracker/core/constants/app_constants.dart';
 import 'package:ramadan_habit_tracker/core/error/exceptions.dart';
 import 'package:ramadan_habit_tracker/core/error/failures.dart';
 import 'package:ramadan_habit_tracker/features/auth/data/datasources/auth_local_datasource.dart';
@@ -34,7 +36,10 @@ class AuthRepositoryImpl implements AuthRepository {
     String smsCode,
   ) async {
     try {
-      final userModel = await remoteDataSource.verifyOtp(verificationId, smsCode);
+      final userModel = await remoteDataSource.verifyOtp(
+        verificationId,
+        smsCode,
+      );
       await localDataSource.cacheUser(userModel);
       await localDataSource.setAuthenticated(true);
       return Right(userModel.toEntity());
@@ -99,6 +104,30 @@ class AuthRepositoryImpl implements AuthRepository {
       await remoteDataSource.signOut();
       await localDataSource.clearCache();
       await localDataSource.setAuthenticated(false);
+
+      // Clear user-specific data boxes to prevent data bleeding
+      // Note: We use Hive.box directly here to avoid circular dependencies
+      // or complex dependency injection changes for this fix.
+      try {
+        if (Hive.isBoxOpen(AppConstants.prayerLogsBox)) {
+          await Hive.box(AppConstants.prayerLogsBox).clear();
+        }
+        if (Hive.isBoxOpen(AppConstants.quranProgressBox)) {
+          await Hive.box(AppConstants.quranProgressBox).clear();
+        }
+        if (Hive.isBoxOpen(AppConstants.ibadahChecklistBox)) {
+          await Hive.box(AppConstants.ibadahChecklistBox).clear();
+        }
+        if (Hive.isBoxOpen(AppConstants.duaBookmarksBox)) {
+          await Hive.box(AppConstants.duaBookmarksBox).clear();
+        }
+        if (Hive.isBoxOpen(AppConstants.adhkarProgressBox)) {
+          await Hive.box(AppConstants.adhkarProgressBox).clear();
+        }
+      } catch (e) {
+        // Ignore errors during cache clearing
+      }
+
       return const Right(null);
     } on ServerException catch (e) {
       return Left(AuthFailure(e.message));

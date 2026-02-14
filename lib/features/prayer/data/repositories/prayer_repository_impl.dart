@@ -1,54 +1,67 @@
+import 'dart:convert';
 import 'package:dartz/dartz.dart';
 import 'package:ramadan_habit_tracker/core/error/exceptions.dart';
 import 'package:ramadan_habit_tracker/core/error/failures.dart';
 import 'package:ramadan_habit_tracker/features/prayer/data/datasources/prayer_times_local_datasource.dart';
 import 'package:ramadan_habit_tracker/features/prayer/data/datasources/prayer_times_remote_datasource.dart';
+import 'package:ramadan_habit_tracker/features/prayer/data/models/hijri_date_model.dart';
 import 'package:ramadan_habit_tracker/features/prayer/domain/entities/prayer_log.dart';
 import 'package:ramadan_habit_tracker/features/prayer/domain/entities/prayer_streak.dart';
-import 'package:ramadan_habit_tracker/features/prayer/domain/entities/prayer_time.dart';
+
+import 'package:ramadan_habit_tracker/features/prayer/domain/entities/prayer_times_result.dart';
 import 'package:ramadan_habit_tracker/features/prayer/domain/repositories/prayer_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ramadan_habit_tracker/core/constants/app_constants.dart';
 
 class PrayerRepositoryImpl implements PrayerRepository {
   final PrayerTimesRemoteDataSource remoteDataSource;
   final PrayerTimesLocalDataSource localDataSource;
+  final SharedPreferences sharedPreferences;
 
   PrayerRepositoryImpl({
     required this.remoteDataSource,
     required this.localDataSource,
+    required this.sharedPreferences,
   });
 
   String _dateKey(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
   @override
-  Future<Either<Failure, List<PrayerTime>>> getPrayerTimes({
-    required String city,
-    required String country,
+  Future<Either<Failure, PrayerTimesResult>> getPrayerTimes({
+    required double lat,
+    required double lng,
+    required DateTime date,
     required int method,
   }) async {
     try {
-      final models = await remoteDataSource.fetchPrayerTimes(
-        city: city,
-        country: country,
+      final result = await remoteDataSource.fetchPrayerTimes(
+        lat: lat,
+        lng: lng,
+        date: date,
         method: method,
       );
 
       // Cache the times
-      await localDataSource.cachePrayerTimes(models);
+      await localDataSource.cachePrayerTimes(result.prayerTimes);
 
       // Get today's log to merge completion status
-      final dateKey = _dateKey(DateTime.now());
+      final dateKey = _dateKey(date);
       final log = await localDataSource.getPrayerLog(dateKey);
-      final nextPrayer = _calculateNextPrayer(models);
+      final nextPrayer = _calculateNextPrayer(result.prayerTimes);
 
-      final times = models.map((m) {
+      final times = result.prayerTimes.map((m) {
         return m.toEntity(
           isCompleted: log.completedPrayers[m.name] ?? false,
           isNext: m.name == nextPrayer,
         );
       }).toList();
 
-      return Right(times);
+      await _cacheHijriDate(result.hijriDate);
+
+      return Right(
+        PrayerTimesResult(prayerTimes: times, hijriDate: result.hijriDate),
+      );
     } on NetworkException catch (e) {
       // Try cached data on network error
       return _getCachedWithStatus(e.message);
@@ -59,7 +72,9 @@ class PrayerRepositoryImpl implements PrayerRepository {
     }
   }
 
-  Future<Either<Failure, List<PrayerTime>>> _getCachedWithStatus(String errorMsg) async {
+  Future<Either<Failure, PrayerTimesResult>> _getCachedWithStatus(
+    String errorMsg,
+  ) async {
     try {
       final cached = await localDataSource.getCachedPrayerTimes();
       if (cached.isEmpty) {
@@ -77,14 +92,16 @@ class PrayerRepositoryImpl implements PrayerRepository {
         );
       }).toList();
 
-      return Right(times);
+      return Right(
+        PrayerTimesResult(prayerTimes: times, hijriDate: _getCachedHijriDate()),
+      );
     } catch (_) {
       return Left(NetworkFailure(errorMsg));
     }
   }
 
   @override
-  Future<Either<Failure, List<PrayerTime>>> getCachedPrayerTimes() async {
+  Future<Either<Failure, PrayerTimesResult>> getCachedPrayerTimes() async {
     try {
       final cached = await localDataSource.getCachedPrayerTimes();
       final dateKey = _dateKey(DateTime.now());
@@ -98,7 +115,9 @@ class PrayerRepositoryImpl implements PrayerRepository {
         );
       }).toList();
 
-      return Right(times);
+      return Right(
+        PrayerTimesResult(prayerTimes: times, hijriDate: _getCachedHijriDate()),
+      );
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     }
@@ -120,7 +139,10 @@ class PrayerRepositoryImpl implements PrayerRepository {
     String prayerName,
   ) async {
     try {
-      final model = await localDataSource.togglePrayer(_dateKey(date), prayerName);
+      final model = await localDataSource.togglePrayer(
+        _dateKey(date),
+        prayerName,
+      );
       return Right(model.toEntity());
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
@@ -143,7 +165,8 @@ class PrayerRepositoryImpl implements PrayerRepository {
         final key = _dateKey(date);
         final log = allLogs[key];
 
-        if (log != null && log.completedPrayers.values.where((v) => v).length == 5) {
+        if (log != null &&
+            log.completedPrayers.values.where((v) => v).length == 5) {
           tempStreak++;
           if (i == currentStreak) currentStreak++;
         } else {
@@ -151,10 +174,16 @@ class PrayerRepositoryImpl implements PrayerRepository {
         }
       }
 
-      // Find longest streak
+      // Find longest streak and total completed
       tempStreak = 0;
+      int totalCompleted = 0;
       for (final log in allLogs.values) {
-        if (log.completedPrayers.values.where((v) => v).length == 5) {
+        final completedCount = log.completedPrayers.values
+            .where((v) => v)
+            .length;
+        totalCompleted += completedCount;
+
+        if (completedCount == 5) {
           tempStreak++;
           if (tempStreak > longestStreak) longestStreak = tempStreak;
         } else {
@@ -169,14 +198,18 @@ class PrayerRepositoryImpl implements PrayerRepository {
         final date = today.subtract(Duration(days: 6 - i));
         final key = _dateKey(date);
         final log = allLogs[key];
-        return log != null && log.completedPrayers.values.where((v) => v).length == 5;
+        return log != null &&
+            log.completedPrayers.values.where((v) => v).length == 5;
       });
 
-      return Right(PrayerStreak(
-        currentStreak: currentStreak,
-        longestStreak: longestStreak,
-        weeklyCompletion: weeklyCompletion,
-      ));
+      return Right(
+        PrayerStreak(
+          currentStreak: currentStreak,
+          longestStreak: longestStreak,
+          totalPrayersCompleted: totalCompleted,
+          weeklyCompletion: weeklyCompletion,
+        ),
+      );
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     }
@@ -198,5 +231,25 @@ class PrayerRepositoryImpl implements PrayerRepository {
       }
     }
     return null;
+  }
+
+  Future<void> _cacheHijriDate(HijriDateModel? hijriDate) async {
+    if (hijriDate == null) return;
+    await sharedPreferences.setString(
+      AppConstants.lastHijriDateKey,
+      jsonEncode(hijriDate.toJson()),
+    );
+  }
+
+  HijriDateModel? _getCachedHijriDate() {
+    final raw = sharedPreferences.getString(AppConstants.lastHijriDateKey);
+    if (raw == null || raw.isEmpty) return null;
+
+    try {
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      return HijriDateModel.fromJson(json);
+    } catch (_) {
+      return null;
+    }
   }
 }

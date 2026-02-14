@@ -5,6 +5,7 @@ import 'package:ramadan_habit_tracker/features/quran/data/models/quran_progress_
 abstract class QuranLocalDataSource {
   Future<QuranProgressModel> getProgress();
   Future<QuranProgressModel> updatePagesRead(int pages);
+  Future<QuranProgressModel> resetProgress();
 }
 
 class QuranLocalDataSourceImpl implements QuranLocalDataSource {
@@ -33,10 +34,15 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
     try {
       final current = progressBox.get(_key) ?? QuranProgressModel.initial();
       final now = DateTime.now();
-      final lastRead = DateTime.fromMillisecondsSinceEpoch(current.lastReadTimestamp);
+      final lastRead = DateTime.fromMillisecondsSinceEpoch(
+        current.lastReadTimestamp,
+      );
 
       // Reset daily count if new day
-      final isNewDay = now.day != lastRead.day || now.month != lastRead.month || now.year != lastRead.year;
+      final isNewDay =
+          now.day != lastRead.day ||
+          now.month != lastRead.month ||
+          now.year != lastRead.year;
 
       final updated = QuranProgressModel(
         currentPage: (current.currentPage + pages).clamp(0, 604),
@@ -48,6 +54,17 @@ class QuranLocalDataSourceImpl implements QuranLocalDataSource {
       return updated;
     } catch (e) {
       throw CacheException('Failed to update Quran progress: $e');
+    }
+  }
+
+  @override
+  Future<QuranProgressModel> resetProgress() async {
+    try {
+      final initial = QuranProgressModel.initial();
+      await progressBox.put(_key, initial);
+      return initial;
+    } catch (e) {
+      throw CacheException('Failed to reset Quran progress: $e');
     }
   }
 }
