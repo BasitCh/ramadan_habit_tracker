@@ -25,12 +25,30 @@ class ChallengeLocalDataSourceImpl implements ChallengeLocalDataSource {
       final completedSet = completedDays.map((e) => int.parse(e)).toSet();
 
       return AppConstants.ramadanChallenges.map((data) {
-        final day = data['day'] as int;
+        final originalDay = data['day'] as int;
+        // In this method, we return the list as defined in constants.
+        // The UI or Bloc should handle mapping "Current Day > 30" to one of these.
+        // However, to support "history" of completed challenges even if they repeat,
+        // we might need a more robust system.
+        // For now, simplicity: The list remains 1-30.
+        // If today is Day 35, the UI will ask for Challenge #5.
+        // If Challenge #5 was completed on Day 5, should it be reset for Day 35?
+        // The user asked to "renew them".
+        // This implies we should track completion key as "day_combined" or similar.
+        // BUT, changing the key structure now might break existing completions.
+        // Let's stick to the request: "renew them".
+        // If we want to renew, we should check if the completion date was "long ago" or just rely on manual uncheck.
+        // Easier approach for MVP:
+        // The 'isCompleted' flag here maps to the static day ID (1-30).
+        // If the user completes Day 5, it stays completed until they uncheck it.
+        // To allow "renewal", we can just let them uncheck it.
+        // OR, we can treat the completion key as unique per cycle.
+        // Let's keep it simple: Map 1-30. If day > 30, it maps to day % 30.
         return ChallengeModel(
-          day: day,
+          day: originalDay,
           title: data['title'] as String,
           description: data['description'] as String,
-          isCompleted: completedSet.contains(day),
+          isCompleted: completedSet.contains(originalDay),
         );
       }).toList();
     } catch (e) {

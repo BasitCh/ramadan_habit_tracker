@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ramadan_habit_tracker/app/theme/app_colors.dart';
 import 'package:ramadan_habit_tracker/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:ramadan_habit_tracker/features/auth/presentation/bloc/auth_event.dart';
+
 import 'package:ramadan_habit_tracker/features/auth/presentation/bloc/auth_state.dart';
 
 class PhoneLoginPage extends StatefulWidget {
@@ -104,7 +104,9 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.textPrimary.withValues(alpha: 0.6),
+                              color: AppColors.textPrimary.withValues(
+                                alpha: 0.6,
+                              ),
                               height: 1.5,
                             ),
                           ),
@@ -130,7 +132,9 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               elevation: 8,
-                              shadowColor: AppColors.primary.withValues(alpha: 0.25),
+                              shadowColor: AppColors.primary.withValues(
+                                alpha: 0.25,
+                              ),
                             ),
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -149,45 +153,6 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
-
-                        // Google Sign Up (Secondary)
-                        SizedBox(
-                          width: double.infinity,
-                          height: 60,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              context.read<AuthBloc>().add(const GoogleSignInRequested());
-                            },
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              side: BorderSide(
-                                color: AppColors.textPrimary.withValues(alpha: 0.1),
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CustomPaint(painter: _GoogleLogoPainter()),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Continue with Google',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                       ],
                     ),
 
@@ -202,7 +167,9 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
                           Text(
                             'Already have an account? ',
                             style: TextStyle(
-                              color: AppColors.textPrimary.withValues(alpha: 0.5),
+                              color: AppColors.textPrimary.withValues(
+                                alpha: 0.5,
+                              ),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -228,33 +195,4 @@ class _PhoneLoginPageState extends State<PhoneLoginPage> {
       ),
     );
   }
-}
-
-class _GoogleLogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double w = size.width;
-    final double h = size.height;
-
-    final bluePaint = Paint()..color = const Color(0xFF4285F4);
-    canvas.drawArc(Rect.fromLTWH(0, 0, w, h), -0.5, 1.8, true, bluePaint);
-
-    final greenPaint = Paint()..color = const Color(0xFF34A853);
-    canvas.drawArc(Rect.fromLTWH(0, 0, w, h), 1.3, 1.2, true, greenPaint);
-
-    final yellowPaint = Paint()..color = const Color(0xFFFBBC05);
-    canvas.drawArc(Rect.fromLTWH(0, 0, w, h), 2.5, 1.0, true, yellowPaint);
-
-    final redPaint = Paint()..color = const Color(0xFFEA4335);
-    canvas.drawArc(Rect.fromLTWH(0, 0, w, h), 3.5, 1.3, true, redPaint);
-
-    final whitePaint = Paint()..color = Colors.white;
-    canvas.drawCircle(Offset(w / 2, h / 2), w * 0.32, whitePaint);
-
-    canvas.drawRect(Rect.fromLTWH(w * 0.48, h * 0.35, w * 0.52, h * 0.3), bluePaint);
-    canvas.drawRect(Rect.fromLTWH(w * 0.48, h * 0.38, w * 0.52, h * 0.24), whitePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

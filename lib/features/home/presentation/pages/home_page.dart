@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 import 'package:ramadan_habit_tracker/app/theme/app_colors.dart';
 import 'package:ramadan_habit_tracker/core/ads/ad_helper.dart';
 import 'package:ramadan_habit_tracker/core/presentation/widgets/clay_card.dart';
@@ -56,29 +56,13 @@ class _HomePageState extends State<HomePage> {
     final now = DateTime.now();
     final start = AppConstants.ramadanStart;
     int day = now.difference(start).inDays + 1;
+    // Allow selecting past/future days freely, but default to current day
     if (day < 1) day = 1;
-    if (day > 30) day = 30;
+    // We no longer cap at 30, allowing for post-Ramadan or extended challenges
     _selectedChallengeDay = day;
-
-    // Load initial map position (defaults to London, updates with location)
-    _loadMapLocation();
-  }
-
-  Future<void> _loadMapLocation() async {
-    // We can reuse LocationService from DI if available, or just use a default
-    // Since we don't have direct access to LocationService here without looking up via GetIt
-    // Let's rely on PrayerBloc's location if possible or just default.
-    // Better: Use `sl<LocationService>()` if imported.
-    // For now, default to London.
-    _initialMapPosition = const CameraPosition(
-      target: LatLng(51.5074, -0.1278),
-      zoom: 14,
-    );
   }
 
   int _selectedChallengeDay = 1;
-  final Completer<GoogleMapController> _mapController = Completer();
-  CameraPosition? _initialMapPosition;
 
   @override
   void dispose() {
@@ -111,8 +95,6 @@ class _HomePageState extends State<HomePage> {
             _buildIbadahChecklist(),
             const SizedBox(height: 20),
             _buildQuranCard(context),
-            const SizedBox(height: 20),
-            _buildNearbyMasjids(),
             if (_isBannerReady) ...[
               const SizedBox(height: 24),
               _buildBannerAd(),
@@ -515,12 +497,7 @@ class _HomePageState extends State<HomePage> {
           return const SizedBox.shrink();
         }
 
-        // Use selected day instead of auto-calculated only
-        // Find challenge for selected day
-        final challenge = state.challenges.firstWhere(
-          (c) => c.day == _selectedChallengeDay,
-          orElse: () => state.challenges.first,
-        );
+        final challenge = state.challenge;
 
         return Container(
           padding: const EdgeInsets.all(24),
@@ -557,7 +534,7 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       const Expanded(
                         child: Text(
-                          '30 Day Challenge',
+                          'Daily Challenge',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -577,7 +554,9 @@ class _HomePageState extends State<HomePage> {
                               color: Colors.white,
                             ),
                             onPressed: _selectedChallengeDay > 1
-                                ? () => setState(() => _selectedChallengeDay--)
+                                ? () => _changeChallengeDay(
+                                    _selectedChallengeDay - 1,
+                                  )
                                 : null,
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
@@ -586,7 +565,7 @@ class _HomePageState extends State<HomePage> {
                           Text(
                             'Day $_selectedChallengeDay',
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 12, // Reduced size slightly for space
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
@@ -597,9 +576,8 @@ class _HomePageState extends State<HomePage> {
                               Icons.chevron_right,
                               color: Colors.white,
                             ),
-                            onPressed: _selectedChallengeDay < 30
-                                ? () => setState(() => _selectedChallengeDay++)
-                                : null,
+                            onPressed: () =>
+                                _changeChallengeDay(_selectedChallengeDay + 1),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                           ),
@@ -607,7 +585,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 16),
                   Text(
                     "TODAY'S CHALLENGE",
                     style: TextStyle(
@@ -617,81 +595,74 @@ class _HomePageState extends State<HomePage> {
                       letterSpacing: 2,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.1),
-                      ),
+                  const SizedBox(height: 8),
+                  Text(
+                    challenge.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      height: 1.2,
                     ),
-                    child: Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            if (challenge.isCompleted) {
-                              context.read<ChallengeBloc>().add(
-                                UncompleteChallengeRequested(challenge.day),
-                              );
-                            } else {
-                              context.read<ChallengeBloc>().add(
-                                CompleteChallengeRequested(challenge.day),
-                              );
-                            }
-                          },
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: challenge.isCompleted
-                                  ? Colors.white
-                                  : Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              challenge.isCompleted
-                                  ? Icons.check
-                                  : Icons.auto_awesome,
-                              color: challenge.isCompleted
-                                  ? AppColors.primary
-                                  : Colors.white,
-                              size: 24,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    challenge.description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (challenge.isCompleted) {
+                          context.read<ChallengeBloc>().add(
+                            UncompleteChallengeRequested(challenge.day),
+                          );
+                        } else {
+                          context.read<ChallengeBloc>().add(
+                            CompleteChallengeRequested(challenge.day),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: challenge.isCompleted
+                            ? Colors.white.withValues(alpha: 0.2)
+                            : Colors.white,
+                        foregroundColor: challenge.isCompleted
+                            ? Colors.white
+                            : AppColors.primary,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            challenge.isCompleted
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            challenge.isCompleted
+                                ? 'Completed'
+                                : 'Mark as Complete',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                challenge.title,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: Colors.white.withValues(
-                                    alpha: challenge.isCompleted ? 0.6 : 1.0,
-                                  ),
-                                  decoration: challenge.isCompleted
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                  decorationColor: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                challenge.description,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -833,6 +804,8 @@ class _HomePageState extends State<HomePage> {
                             fontWeight: FontWeight.w500,
                             color: Colors.grey.shade700,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -926,74 +899,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildNearbyMasjids() {
-    return Container(
-      height: 200,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade100),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Stack(
-          children: [
-            if (_initialMapPosition != null)
-              GoogleMap(
-                mapType: MapType.normal,
-                initialCameraPosition: _initialMapPosition!,
-                myLocationEnabled: true,
-                myLocationButtonEnabled: false,
-                zoomControlsEnabled: false,
-                onMapCreated: (GoogleMapController controller) {
-                  _mapController.complete(controller);
-                },
-                onTap: (_) => context.push('/masjid-locator'),
-              )
-            else
-              const Center(child: CircularProgressIndicator()),
-            Positioned(
-              bottom: 16,
-              left: 16,
-              child: GestureDetector(
-                onTap: () => context.push('/masjid-locator'),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 8,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.near_me, color: AppColors.primary, size: 16),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Nearby Masjids',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildBannerAd() {
     final ad = _bannerAd;
     if (ad == null) return const SizedBox.shrink();
@@ -1055,6 +960,14 @@ class _HomePageState extends State<HomePage> {
     final minutes = diff.inMinutes.remainder(60);
     if (hours == 0) return '${minutes}m';
     return '${hours}h ${minutes}m';
+  }
+
+  void _changeChallengeDay(int newDay) {
+    if (newDay < 1) return;
+    setState(() {
+      _selectedChallengeDay = newDay;
+    });
+    context.read<ChallengeBloc>().add(LoadDailyChallengeRequested(newDay));
   }
 }
 

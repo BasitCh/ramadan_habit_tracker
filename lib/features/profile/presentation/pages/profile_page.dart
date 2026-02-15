@@ -68,114 +68,16 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        final user = state is Authenticated ? state.user : null;
-        final name = user?.displayName ?? 'User';
-        final identifier = user?.email ?? user?.phoneNumber ?? '';
-        final photoUrl = user?.photoUrl;
-
-        return Row(
-          children: [
-            // Avatar with gradient ring
-            Stack(
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [AppColors.primary, AppColors.secondary],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                    ),
-                    child: CircleAvatar(
-                      backgroundColor: AppColors.primaryLight,
-                      backgroundImage: photoUrl != null
-                          ? NetworkImage(photoUrl)
-                          : null,
-                      child: photoUrl == null
-                          ? const Icon(
-                              Icons.person,
-                              color: AppColors.primary,
-                              size: 28,
-                            )
-                          : null,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.background, width: 2),
-                    ),
-                    child: const Text(
-                      'PRO',
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'RAMADAN KAREEM',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    name.isNotEmpty ? name : 'User',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  if (identifier.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      identifier,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        );
-      },
+    return const Center(
+      child: Text(
+        'RAMADAN KAREEM',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: AppColors.primary,
+          letterSpacing: 2,
+        ),
+      ),
     );
   }
 

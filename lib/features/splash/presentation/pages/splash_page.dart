@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ramadan_habit_tracker/app/theme/app_colors.dart';
+import 'package:ramadan_habit_tracker/core/services/location_service.dart';
+import 'package:ramadan_habit_tracker/di/injection_container.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -36,12 +38,26 @@ class _SplashPageState extends State<SplashPage>
 
     _controller.forward();
 
+    // Trigger location permission request early
+    // We don't await this to avoid blocking the UI, but it will start the process
+    // and hopefully have a location ready by the time Home loads.
+    _initLocation();
+
     // Navigate after animation delay without auth gating.
     Future.delayed(const Duration(milliseconds: 2500), () {
       if (mounted) {
         context.go('/home');
       }
     });
+  }
+
+  Future<void> _initLocation() async {
+    try {
+      final locationService = sl<LocationService>();
+      await locationService.getCurrentLocation();
+    } catch (e) {
+      debugPrint('Error initializing location: $e');
+    }
   }
 
   @override
@@ -53,173 +69,169 @@ class _SplashPageState extends State<SplashPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFFF8F6FF), // Lavender light
-                AppColors.primaryLight,
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFF8F6FF), // Lavender light
+              AppColors.primaryLight,
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-          child: Stack(
-            children: [
-              // Decorative floating elements
-              Positioned(
-                top: MediaQuery.of(context).size.height * 0.2,
-                left: MediaQuery.of(context).size.width * 0.15,
-                child: AnimatedBuilder(
-                  animation: _fadeAnimation,
-                  builder: (context, child) => Opacity(
-                    opacity: _fadeAnimation.value * 0.2,
-                    child: const Icon(
-                      Icons.dark_mode,
-                      size: 60,
-                      color: AppColors.textPrimary,
-                    ),
+        ),
+        child: Stack(
+          children: [
+            // Decorative floating elements
+            Positioned(
+              top: MediaQuery.of(context).size.height * 0.2,
+              left: MediaQuery.of(context).size.width * 0.15,
+              child: AnimatedBuilder(
+                animation: _fadeAnimation,
+                builder: (context, child) => Opacity(
+                  opacity: _fadeAnimation.value * 0.2,
+                  child: const Icon(
+                    Icons.dark_mode,
+                    size: 60,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
-              Positioned(
-                top: MediaQuery.of(context).size.height * 0.25,
-                right: MediaQuery.of(context).size.width * 0.2,
-                child: AnimatedBuilder(
-                  animation: _fadeAnimation,
-                  builder: (context, child) => Opacity(
-                    opacity: _fadeAnimation.value * 0.15,
-                    child: const Icon(
-                      Icons.star,
-                      size: 30,
-                      color: AppColors.textPrimary,
-                    ),
+            ),
+            Positioned(
+              top: MediaQuery.of(context).size.height * 0.25,
+              right: MediaQuery.of(context).size.width * 0.2,
+              child: AnimatedBuilder(
+                animation: _fadeAnimation,
+                builder: (context, child) => Opacity(
+                  opacity: _fadeAnimation.value * 0.15,
+                  child: const Icon(
+                    Icons.star,
+                    size: 30,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
+            ),
 
-              // Main content
-              Center(
-                child: AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) => Opacity(
-                    opacity: _fadeAnimation.value,
-                    child: Transform.scale(
-                      scale: _scaleAnimation.value,
-                      child: child,
-                    ),
+            // Main content
+            Center(
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) => Opacity(
+                  opacity: _fadeAnimation.value,
+                  child: Transform.scale(
+                    scale: _scaleAnimation.value,
+                    child: child,
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Bismillah Text
-                      Text(
-                        'بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ',
-                        style: TextStyle(
-                          fontSize: 22,
-                          color: AppColors.textPrimary.withValues(alpha: 0.6),
-                          letterSpacing: 2,
-                        ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Bismillah Text
+                    Text(
+                      'بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ',
+                      style: TextStyle(
+                        fontSize: 22,
+                        color: AppColors.textPrimary.withValues(alpha: 0.6),
+                        letterSpacing: 2,
                       ),
-                      const SizedBox(height: 64),
+                    ),
+                    const SizedBox(height: 64),
 
-                      // Lantern glow effect
-                      Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(
-                                0xFFFFD97D,
-                              ).withValues(alpha: 0.3),
-                              blurRadius: 80,
-                              spreadRadius: 20,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.mosque_rounded,
-                          size: 120,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 64),
-
-                      // App Name
-                      Text(
-                        'NOOR PLANNER',
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 8,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Tagline with decorative lines
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 1,
-                            color: AppColors.textPrimary.withValues(alpha: 0.2),
-                          ),
-                          const SizedBox(width: 16),
-                          Text(
-                            'SPIRITUAL COMPANION',
-                            style: TextStyle(
-                              fontSize: 10,
-                              letterSpacing: 6,
-                              color: AppColors.textPrimary.withValues(
-                                alpha: 0.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Container(
-                            width: 32,
-                            height: 1,
-                            color: AppColors.textPrimary.withValues(alpha: 0.2),
+                    // Lantern glow effect
+                    Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFFFFD97D,
+                            ).withValues(alpha: 0.3),
+                            blurRadius: 80,
+                            spreadRadius: 20,
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-              ),
+                      child: const Icon(
+                        Icons.mosque_rounded,
+                        size: 120,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 64),
 
-              // Bottom loading indicator
-              Positioned(
-                bottom: 80,
-                left: 0,
-                right: 0,
-                child: AnimatedBuilder(
-                  animation: _fadeAnimation,
-                  builder: (context, child) => Opacity(
-                    opacity: _fadeAnimation.value * 0.4,
-                    child: child,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildDot(1),
-                      const SizedBox(width: 12),
-                      _buildDot(2),
-                      const SizedBox(width: 12),
-                      _buildDot(3),
-                    ],
-                  ),
+                    // App Name
+                    Text(
+                      'NOOR PLANNER',
+                      style: TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 8,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Tagline with decorative lines
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 1,
+                          color: AppColors.textPrimary.withValues(alpha: 0.2),
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          'SPIRITUAL COMPANION',
+                          style: TextStyle(
+                            fontSize: 10,
+                            letterSpacing: 6,
+                            color: AppColors.textPrimary.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Container(
+                          width: 32,
+                          height: 1,
+                          color: AppColors.textPrimary.withValues(alpha: 0.2),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+
+            // Bottom loading indicator
+            Positioned(
+              bottom: 80,
+              left: 0,
+              right: 0,
+              child: AnimatedBuilder(
+                animation: _fadeAnimation,
+                builder: (context, child) =>
+                    Opacity(opacity: _fadeAnimation.value * 0.4, child: child),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildDot(1),
+                    const SizedBox(width: 12),
+                    _buildDot(2),
+                    const SizedBox(width: 12),
+                    _buildDot(3),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
+      ),
     );
   }
 

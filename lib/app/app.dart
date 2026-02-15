@@ -48,7 +48,10 @@ class App extends StatelessWidget {
             ),
         ),
         BlocProvider<ChallengeBloc>(
-          create: (_) => sl<ChallengeBloc>()..add(LoadChallengesRequested()),
+          create: (_) => sl<ChallengeBloc>()
+            ..add(
+              LoadDailyChallengeRequested(AppConstants.getCurrentRamadanDay()),
+            ),
         ),
       ],
       child: MaterialApp.router(

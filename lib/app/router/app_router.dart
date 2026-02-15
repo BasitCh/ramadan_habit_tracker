@@ -17,7 +17,6 @@ import 'package:ramadan_habit_tracker/features/splash/presentation/pages/splash_
 import 'package:ramadan_habit_tracker/features/tasbeeh/presentation/pages/tasbeeh_page.dart';
 import 'package:ramadan_habit_tracker/features/zakat/presentation/pages/zakat_page.dart';
 import 'package:ramadan_habit_tracker/features/sunnah/presentation/pages/sunnah_page.dart';
-import 'package:ramadan_habit_tracker/features/mosque/presentation/pages/masjid_locator_page.dart';
 
 class AppRouter {
   AppRouter._();
@@ -117,10 +116,6 @@ class AppRouter {
       GoRoute(
         path: '/tasbeeh',
         builder: (context, state) => const TasbeehPage(),
-      ),
-      GoRoute(
-        path: '/masjid-locator',
-        builder: (context, state) => const MasjidLocatorPage(),
       ),
     ],
   );

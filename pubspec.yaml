@@ -1,6 +1,6 @@
 name: ramadan_habit_tracker
 description: "Ramadan Habit Tracker - Track prayers, Quran progress, fasting, dhikr and custom habits."
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -99,9 +99,9 @@ flutter_launcher_icons:
 
 flutter_native_splash:
   color: "#ffffff"
-  image: "assets/icon/app_icon.png"
+  image: "assets/icon/splash.png"
   android_12:
-    image: "assets/icon/app_icon.png"
+    image: "assets/icon/splash.png"
     color: "#ffffff"
 
 flutter:
