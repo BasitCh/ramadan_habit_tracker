@@ -140,7 +140,7 @@ class _SplashPageState extends State<SplashPage>
                       ),
                     ),
                     const SizedBox(height: 64),
-
+                
                     // Lantern glow effect
                     Container(
                       width: 200,
@@ -164,7 +164,7 @@ class _SplashPageState extends State<SplashPage>
                       ),
                     ),
                     const SizedBox(height: 64),
-
+                
                     // App Name
                     Text(
                       'NOOR PLANNER',
@@ -176,7 +176,7 @@ class _SplashPageState extends State<SplashPage>
                       ),
                     ),
                     const SizedBox(height: 24),
-
+                
                     // Tagline with decorative lines
                     Row(
                       mainAxisSize: MainAxisSize.min,

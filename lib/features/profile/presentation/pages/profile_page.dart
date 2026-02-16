@@ -58,8 +58,8 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 24),
               _buildQuoteCard(),
               const SizedBox(height: 24),
-              _buildLogoutButton(context),
-              const SizedBox(height: 100),
+              // _buildLogoutButton(context),
+              // const SizedBox(height: 100),
             ],
           ),
         ),
@@ -385,14 +385,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ],
                     ),
-                    Text(
-                      'View All',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
-                    ),
+                    // Text(
+                    //   'View All',
+                    //   style: TextStyle(
+                    //     fontSize: 12,
+                    //     fontWeight: FontWeight.w600,
+                    //     color: AppColors.primary,
+                    //   ),
+                    // ),
                   ],
                 ),
                 const SizedBox(height: 16),

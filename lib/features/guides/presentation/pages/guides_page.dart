@@ -22,8 +22,8 @@ class GuidesPage extends StatelessWidget {
             const SizedBox(height: 16),
             _buildSunnahLibrary(context),
             const SizedBox(height: 16),
-            _buildSmallCards(context),
-            const SizedBox(height: 100),
+            // _buildSmallCards(context),
+            // const SizedBox(height: 100),
           ],
         ),
       ),
@@ -298,106 +298,6 @@ class GuidesPage extends StatelessWidget {
         ],
       ),
       ),
-    );
-  }
-
-  Widget _buildSmallCards(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => context.push('/guides/saved-articles'),
-            child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: Colors.grey.shade100),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.bookmark, color: Colors.grey.shade500, size: 20),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Saved Articles',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '12 ITEMS',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade400,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
-            ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => context.push('/guides/daily-dhikr'),
-            child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: Colors.grey.shade100),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.star, color: Colors.grey.shade500, size: 20),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Daily Dhikr',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'MORNING & EVE',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade400,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
-            ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

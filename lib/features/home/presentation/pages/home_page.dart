@@ -107,47 +107,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'ASSALAMU ALAIKUM,',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.secondary.withValues(alpha: 0.6),
-                letterSpacing: 2,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Ahmed Ali',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        Container(
-          width: 48,
-          height: 48,
-          padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.primary, width: 2),
-            color: Colors.white,
-          ),
-          child: const CircleAvatar(
-            backgroundColor: AppColors.primaryLight,
-            child: Icon(Icons.person, color: AppColors.primary),
-          ),
-        ),
-      ],
+    return Text(
+      'ASSALAMU ALAIKUM,',
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: AppColors.secondary.withValues(alpha: 0.6),
+        letterSpacing: 2,
+      ),
     );
   }
 
@@ -436,6 +403,9 @@ class _HomePageState extends State<HomePage> {
                 const Text(
                   'Morning & Evening',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   'Adhkar',
@@ -797,15 +767,17 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Text(
-                          entry.key,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade700,
+                        Expanded(
+                          child: Text(
+                            entry.key,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade700,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
