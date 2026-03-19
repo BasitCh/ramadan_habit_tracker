@@ -24,6 +24,28 @@ class AppConstants {
     return difference + 1;
   }
 
+  static bool get isPreRamadan {
+    final today = DateTime.now();
+    final t = DateTime(today.year, today.month, today.day);
+    final s = DateTime(ramadanStart.year, ramadanStart.month, ramadanStart.day);
+    return t.isBefore(s);
+  }
+
+  static bool get isRamadan {
+    final today = DateTime.now();
+    final t = DateTime(today.year, today.month, today.day);
+    final s = DateTime(ramadanStart.year, ramadanStart.month, ramadanStart.day);
+    final e = DateTime(ramadanEnd.year, ramadanEnd.month, ramadanEnd.day);
+    return !t.isBefore(s) && !t.isAfter(e);
+  }
+
+  static bool get isPostRamadan {
+    final today = DateTime.now();
+    final t = DateTime(today.year, today.month, today.day);
+    final e = DateTime(ramadanEnd.year, ramadanEnd.month, ramadanEnd.day);
+    return t.isAfter(e);
+  }
+
   static String getHijriDateString() {
     final day = getCurrentRamadanDay();
     if (day < 1) {

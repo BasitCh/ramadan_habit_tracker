@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:upgrader/upgrader.dart';
 import 'package:ramadan_habit_tracker/app/router/app_router.dart';
 import 'package:ramadan_habit_tracker/app/theme/app_theme.dart';
 import 'package:ramadan_habit_tracker/core/constants/app_constants.dart';
@@ -13,6 +14,7 @@ import 'package:ramadan_habit_tracker/features/ibadah/presentation/bloc/ibadah_b
 import 'package:ramadan_habit_tracker/features/prayer/presentation/bloc/prayer_bloc.dart';
 import 'package:ramadan_habit_tracker/features/prayer/presentation/bloc/prayer_event.dart';
 import 'package:ramadan_habit_tracker/features/challenge/presentation/bloc/challenge_bloc.dart';
+import 'package:ramadan_habit_tracker/features/tasbeeh/presentation/bloc/tasbeeh_bloc.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -53,12 +55,17 @@ class App extends StatelessWidget {
               LoadDailyChallengeRequested(AppConstants.getCurrentRamadanDay()),
             ),
         ),
+        BlocProvider<TasbeehBloc>(
+          create: (_) =>
+              sl<TasbeehBloc>()..add(const TasbeehLoadRequested()),
+        ),
       ],
       child: MaterialApp.router(
         title: 'Noor Planner',
         theme: AppTheme.light,
         routerConfig: AppRouter.router,
         debugShowCheckedModeBanner: false,
+        builder: (context, child) => UpgradeAlert(child: child ?? const SizedBox()),
       ),
     );
   }

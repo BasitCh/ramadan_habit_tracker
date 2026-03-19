@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ramadan_habit_tracker/core/usecases/usecase.dart';
 import 'package:ramadan_habit_tracker/features/quran/domain/entities/quran_progress.dart';
 import 'package:ramadan_habit_tracker/features/quran/domain/entities/surah.dart';
@@ -44,14 +45,36 @@ class ResetQuranProgressRequested extends QuranEvent {
   const ResetQuranProgressRequested();
 }
 
+class BookmarkSurahToggled extends QuranEvent {
+  final int surahNumber;
+  const BookmarkSurahToggled(this.surahNumber);
+  @override
+  List<Object> get props => [surahNumber];
+}
+
+class SetLastReadSurahRequested extends QuranEvent {
+  final int surahNumber;
+  const SetLastReadSurahRequested(this.surahNumber);
+  @override
+  List<Object> get props => [surahNumber];
+}
+
 // ── States ──────────────────────────────────────────────────────────────────
 
 sealed class QuranState extends Equatable {
   final QuranProgress? progress;
   final List<Surah>? surahList;
   final SurahDetail? surahDetail;
+  final List<int> bookmarkedSurahs;
+  final int? lastReadSurahNumber;
 
-  const QuranState({this.progress, this.surahList, this.surahDetail});
+  const QuranState({
+    this.progress,
+    this.surahList,
+    this.surahDetail,
+    this.bookmarkedSurahs = const [],
+    this.lastReadSurahNumber,
+  });
   @override
   List<Object?> get props => [];
 }
@@ -61,7 +84,13 @@ class QuranInitial extends QuranState {
 }
 
 class QuranLoading extends QuranState {
-  const QuranLoading({super.progress, super.surahList, super.surahDetail});
+  const QuranLoading({
+    super.progress,
+    super.surahList,
+    super.surahDetail,
+    super.bookmarkedSurahs,
+    super.lastReadSurahNumber,
+  });
 }
 
 class QuranLoaded extends QuranState {
@@ -69,9 +98,17 @@ class QuranLoaded extends QuranState {
     required super.progress,
     required super.surahList,
     super.surahDetail,
+    super.bookmarkedSurahs,
+    super.lastReadSurahNumber,
   });
   @override
-  List<Object?> get props => [progress, surahList, surahDetail];
+  List<Object?> get props => [
+    progress,
+    surahList,
+    surahDetail,
+    bookmarkedSurahs,
+    lastReadSurahNumber,
+  ];
 }
 
 class QuranError extends QuranState {
@@ -81,9 +118,18 @@ class QuranError extends QuranState {
     super.progress,
     super.surahList,
     super.surahDetail,
+    super.bookmarkedSurahs,
+    super.lastReadSurahNumber,
   });
   @override
-  List<Object?> get props => [message, progress, surahList, surahDetail];
+  List<Object?> get props => [
+    message,
+    progress,
+    surahList,
+    surahDetail,
+    bookmarkedSurahs,
+    lastReadSurahNumber,
+  ];
 }
 
 // ── Bloc ────────────────────────────────────────────────────────────────────
@@ -94,10 +140,16 @@ class QuranBloc extends Bloc<QuranEvent, QuranState> {
   final GetSurahList getSurahList;
   final GetSurahDetail getSurahDetail;
   final ResetQuranProgress resetQuranProgress;
+  final SharedPreferences sharedPreferences;
 
   QuranProgress? _progressCache;
   List<Surah>? _surahListCache;
   SurahDetail? _surahDetailCache;
+  List<int> _bookmarksCache = [];
+  int? _lastReadSurahNumber;
+
+  static const _bookmarksKey = 'quran_bookmarks';
+  static const _lastReadKey = 'quran_last_read_surah';
 
   QuranBloc({
     required this.getQuranProgress,
@@ -105,46 +157,61 @@ class QuranBloc extends Bloc<QuranEvent, QuranState> {
     required this.getSurahList,
     required this.getSurahDetail,
     required this.resetQuranProgress,
+    required this.sharedPreferences,
   }) : super(const QuranInitial()) {
     on<LoadQuranProgressRequested>(_onLoadProgress);
     on<LoadQuranOverviewRequested>(_onLoadOverview);
     on<LoadSurahDetailRequested>(_onLoadDetail);
     on<UpdatePagesReadRequested>(_onUpdate);
     on<ResetQuranProgressRequested>(_onReset);
+    on<BookmarkSurahToggled>(_onBookmarkToggle);
+    on<SetLastReadSurahRequested>(_onSetLastRead);
+    _loadMeta();
   }
+
+  void _loadMeta() {
+    final bookmarkStrings = sharedPreferences.getStringList(_bookmarksKey) ?? [];
+    _bookmarksCache = bookmarkStrings
+        .map((s) => int.tryParse(s))
+        .whereType<int>()
+        .toList();
+    _lastReadSurahNumber = sharedPreferences.getInt(_lastReadKey);
+  }
+
+  QuranLoaded _makeLoaded({SurahDetail? detail}) => QuranLoaded(
+    progress: _progressCache!,
+    surahList: _surahListCache!,
+    surahDetail: detail ?? _surahDetailCache,
+    bookmarkedSurahs: _bookmarksCache,
+    lastReadSurahNumber: _lastReadSurahNumber,
+  );
+
+  QuranError _makeError(String message, {SurahDetail? detail}) => QuranError(
+    message,
+    progress: _progressCache,
+    surahList: _surahListCache,
+    surahDetail: detail ?? _surahDetailCache,
+    bookmarkedSurahs: _bookmarksCache,
+    lastReadSurahNumber: _lastReadSurahNumber,
+  );
 
   Future<void> _onLoadProgress(
     LoadQuranProgressRequested event,
     Emitter<QuranState> emit,
   ) async {
-    emit(
-      QuranLoading(
-        progress: _progressCache,
-        surahList: _surahListCache,
-        surahDetail: _surahDetailCache,
-      ),
-    );
+    emit(QuranLoading(
+      progress: _progressCache,
+      surahList: _surahListCache,
+      surahDetail: _surahDetailCache,
+      bookmarkedSurahs: _bookmarksCache,
+      lastReadSurahNumber: _lastReadSurahNumber,
+    ));
     final result = await getQuranProgress(const NoParams());
     result.fold(
-      (f) => emit(
-        QuranError(
-          f.message,
-          progress: _progressCache,
-          surahList: _surahListCache,
-          surahDetail: _surahDetailCache,
-        ),
-      ),
+      (f) => emit(_makeError(f.message)),
       (p) {
         _progressCache = p;
-        if (_surahListCache != null) {
-          emit(
-            QuranLoaded(
-              progress: p,
-              surahList: _surahListCache!,
-              surahDetail: _surahDetailCache,
-            ),
-          );
-        }
+        if (_surahListCache != null) emit(_makeLoaded());
       },
     );
   }
@@ -153,49 +220,29 @@ class QuranBloc extends Bloc<QuranEvent, QuranState> {
     LoadQuranOverviewRequested event,
     Emitter<QuranState> emit,
   ) async {
-    emit(
-      QuranLoading(
-        progress: _progressCache,
-        surahList: _surahListCache,
-        surahDetail: _surahDetailCache,
-      ),
-    );
+    emit(QuranLoading(
+      progress: _progressCache,
+      surahList: _surahListCache,
+      surahDetail: _surahDetailCache,
+      bookmarkedSurahs: _bookmarksCache,
+      lastReadSurahNumber: _lastReadSurahNumber,
+    ));
 
     final progressResult = await getQuranProgress(const NoParams());
     final listResult = await getSurahList(const NoParams());
 
     progressResult.fold(
-      (f) => emit(
-        QuranError(
-          f.message,
-          progress: _progressCache,
-          surahList: _surahListCache,
-          surahDetail: _surahDetailCache,
-        ),
-      ),
+      (f) => emit(_makeError(f.message)),
       (p) => _progressCache = p,
     );
 
     listResult.fold(
-      (f) => emit(
-        QuranError(
-          f.message,
-          progress: _progressCache,
-          surahList: _surahListCache,
-          surahDetail: _surahDetailCache,
-        ),
-      ),
+      (f) => emit(_makeError(f.message)),
       (list) => _surahListCache = list,
     );
 
     if (_progressCache != null && _surahListCache != null) {
-      emit(
-        QuranLoaded(
-          progress: _progressCache!,
-          surahList: _surahListCache!,
-          surahDetail: _surahDetailCache,
-        ),
-      );
+      emit(_makeLoaded());
     }
   }
 
@@ -203,19 +250,18 @@ class QuranBloc extends Bloc<QuranEvent, QuranState> {
     LoadSurahDetailRequested event,
     Emitter<QuranState> emit,
   ) async {
-    emit(
-      QuranLoading(
-        progress: _progressCache,
-        surahList: _surahListCache,
-        surahDetail: _surahDetailCache,
-      ),
-    );
+    emit(QuranLoading(
+      progress: _progressCache,
+      surahList: _surahListCache,
+      surahDetail: _surahDetailCache,
+      bookmarkedSurahs: _bookmarksCache,
+      lastReadSurahNumber: _lastReadSurahNumber,
+    ));
 
     final detailResult = await getSurahDetail(
       GetSurahDetailParams(surahNumber: event.surahNumber),
     );
 
-    // Ensure caches are populated
     if (_progressCache == null) {
       final res = await getQuranProgress(const NoParams());
       res.fold((_) {}, (r) => _progressCache = r);
@@ -227,33 +273,13 @@ class QuranBloc extends Bloc<QuranEvent, QuranState> {
     }
 
     detailResult.fold(
-      (f) => emit(
-        QuranError(
-          f.message,
-          progress: _progressCache,
-          surahList: _surahListCache,
-          surahDetail: _surahDetailCache,
-        ),
-      ),
+      (f) => emit(_makeError(f.message)),
       (detail) {
         _surahDetailCache = detail;
         if (_progressCache != null && _surahListCache != null) {
-          emit(
-            QuranLoaded(
-              progress: _progressCache!,
-              surahList: _surahListCache!,
-              surahDetail: detail,
-            ),
-          );
+          emit(_makeLoaded(detail: detail));
         } else {
-          emit(
-            QuranError(
-              'Failed to load required Quran data',
-              progress: _progressCache,
-              surahList: _surahListCache,
-              surahDetail: detail,
-            ),
-          );
+          emit(_makeError('Failed to load required Quran data', detail: detail));
         }
       },
     );
@@ -265,25 +291,10 @@ class QuranBloc extends Bloc<QuranEvent, QuranState> {
   ) async {
     final result = await updatePagesRead(UpdatePagesParams(pages: event.pages));
     result.fold(
-      (f) => emit(
-        QuranError(
-          f.message,
-          progress: _progressCache,
-          surahList: _surahListCache,
-          surahDetail: _surahDetailCache,
-        ),
-      ),
+      (f) => emit(_makeError(f.message)),
       (p) {
         _progressCache = p;
-        if (_surahListCache != null) {
-          emit(
-            QuranLoaded(
-              progress: p,
-              surahList: _surahListCache!,
-              surahDetail: _surahDetailCache,
-            ),
-          );
-        }
+        if (_surahListCache != null) emit(_makeLoaded());
       },
     );
   }
@@ -294,26 +305,40 @@ class QuranBloc extends Bloc<QuranEvent, QuranState> {
   ) async {
     final result = await resetQuranProgress(const NoParams());
     result.fold(
-      (f) => emit(
-        QuranError(
-          f.message,
-          progress: _progressCache,
-          surahList: _surahListCache,
-          surahDetail: _surahDetailCache,
-        ),
-      ),
+      (f) => emit(_makeError(f.message)),
       (p) {
         _progressCache = p;
-        if (_surahListCache != null) {
-          emit(
-            QuranLoaded(
-              progress: p,
-              surahList: _surahListCache!,
-              surahDetail: _surahDetailCache,
-            ),
-          );
-        }
+        if (_surahListCache != null) emit(_makeLoaded());
       },
     );
+  }
+
+  Future<void> _onBookmarkToggle(
+    BookmarkSurahToggled event,
+    Emitter<QuranState> emit,
+  ) async {
+    if (_bookmarksCache.contains(event.surahNumber)) {
+      _bookmarksCache = List.from(_bookmarksCache)..remove(event.surahNumber);
+    } else {
+      _bookmarksCache = List.from(_bookmarksCache)..add(event.surahNumber);
+    }
+    await sharedPreferences.setStringList(
+      _bookmarksKey,
+      _bookmarksCache.map((n) => n.toString()).toList(),
+    );
+    if (_progressCache != null && _surahListCache != null) {
+      emit(_makeLoaded());
+    }
+  }
+
+  Future<void> _onSetLastRead(
+    SetLastReadSurahRequested event,
+    Emitter<QuranState> emit,
+  ) async {
+    _lastReadSurahNumber = event.surahNumber;
+    await sharedPreferences.setInt(_lastReadKey, event.surahNumber);
+    if (_progressCache != null && _surahListCache != null) {
+      emit(_makeLoaded());
+    }
   }
 }

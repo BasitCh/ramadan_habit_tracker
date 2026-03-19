@@ -68,10 +68,15 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return const Center(
+    final label = AppConstants.isPostRamadan
+        ? 'EID MUBARAK'
+        : AppConstants.isRamadan
+            ? 'RAMADAN KAREEM'
+            : 'WELCOME BACK';
+    return Center(
       child: Text(
-        'RAMADAN KAREEM',
-        style: TextStyle(
+        label,
+        style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
           color: AppColors.primary,
@@ -82,21 +87,29 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildSpiritualProgress() {
+    if (AppConstants.isPostRamadan) {
+      return _buildPostRamadanCard();
+    }
+
     final currentDay = AppConstants.getCurrentRamadanDay();
     final totalDays = AppConstants.totalRamadanDays;
-    // Ensure accurate progress calculation, clamping between 0 and 1
     final progress = (currentDay / totalDays).clamp(0.0, 1.0);
     final percentage = (progress * 100).toInt();
 
-    String statusText = "Keep it up! You're making progress.";
-    if (currentDay > 20) {
-      statusText = "Last 10 Days! Maximize your efforts.";
+    String statusText;
+    String title;
+    if (currentDay < 1) {
+      statusText = 'Ramadan is coming soon. Prepare your heart.';
+      title = 'Pre-Ramadan';
+    } else if (currentDay > 20) {
+      statusText = 'Last 10 Days! Maximize your efforts.';
+      title = 'Ramadan Day $currentDay';
     } else if (currentDay > 10) {
       statusText = "You're in the second Ashra of Forgiveness.";
-    } else if (currentDay >= 1) {
-      statusText = "First Ashra of Mercy. Start strong!";
+      title = 'Ramadan Day $currentDay';
     } else {
-      statusText = "Ramadan is coming soon. Prepare your heart.";
+      statusText = 'First Ashra of Mercy. Start strong!';
+      title = 'Ramadan Day $currentDay';
     }
 
     return Container(
@@ -137,9 +150,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    currentDay > 0 && currentDay <= 30
-                        ? 'Ramadan Day $currentDay'
-                        : 'Pre-Ramadan',
+                    title,
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -175,6 +186,134 @@ class _ProfilePageState extends State<ProfilePage> {
               fontSize: 10,
               fontStyle: FontStyle.italic,
               color: Colors.white.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPostRamadanCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.secondary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.2),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'RAMADAN 1447',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withValues(alpha: 0.8),
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Alhamdulillah!',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const Text(
+                    'Complete',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Column(
+                  children: [
+                    Text(
+                      '30',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'DAYS',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: const LinearProgressIndicator(
+              value: 1.0,
+              minHeight: 10,
+              backgroundColor: Colors.white24,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.mosque_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'May Allah accept your fasting, prayers, and good deeds. Keep the spirit of Ramadan alive in Shawwal.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

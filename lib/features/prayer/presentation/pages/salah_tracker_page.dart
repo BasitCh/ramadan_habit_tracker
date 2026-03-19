@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:ramadan_habit_tracker/core/constants/app_constants.dart';
 import 'package:ramadan_habit_tracker/app/theme/app_colors.dart';
 import 'package:ramadan_habit_tracker/features/prayer/domain/entities/prayer_time.dart';
@@ -24,12 +25,14 @@ class SalahTrackerPage extends StatefulWidget {
   State<SalahTrackerPage> createState() => _SalahTrackerPageState();
 }
 
-class _SalahTrackerPageState extends State<SalahTrackerPage> {
+class _SalahTrackerPageState extends State<SalahTrackerPage>
+    with WidgetsBindingObserver {
   Timer? _clockTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     context.read<PrayerBloc>().add(const LoadPrayerTimesRequested());
     _clockTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (!mounted) return;
@@ -38,7 +41,15 @@ class _SalahTrackerPageState extends State<SalahTrackerPage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      context.read<PrayerBloc>().add(const LoadPrayerTimesRequested());
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _clockTimer?.cancel();
     super.dispose();
   }
@@ -108,6 +119,9 @@ class _SalahTrackerPageState extends State<SalahTrackerPage> {
                   if (state is PrayerLoading) {
                     return const Center(child: CircularProgressIndicator());
                   }
+                  if (state is PrayerLocationPermissionRequired) {
+                    return _buildLocationPermissionUI(context, state);
+                  }
                   if (state is PrayerError) {
                     return Center(
                       child: Column(
@@ -140,6 +154,98 @@ class _SalahTrackerPageState extends State<SalahTrackerPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLocationPermissionUI(
+    BuildContext context,
+    PrayerLocationPermissionRequired state,
+  ) {
+    final isPermanentlyDenied = state.message.contains('permanently denied');
+    final isServiceDisabled = state.message.contains('services are disabled');
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.location_on,
+              size: 40,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Location Required',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            isServiceDisabled
+                ? 'Please enable location services on your device to get accurate prayer times.'
+                : isPermanentlyDenied
+                ? 'Location permission was denied. Please grant it in App Settings to continue.'
+                : 'Prayer times require your location to be accurate. Please grant location permission.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.5),
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                if (isServiceDisabled) {
+                  await Geolocator.openLocationSettings();
+                } else {
+                  await Geolocator.openAppSettings();
+                }
+                if (context.mounted) {
+                  context.read<PrayerBloc>().add(const LoadPrayerTimesRequested());
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: const Icon(Icons.settings),
+              label: Text(isServiceDisabled ? 'Open Location Settings' : 'Open App Settings'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => context.read<PrayerBloc>().add(const LoadPrayerTimesRequested()),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: const BorderSide(color: AppColors.primary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
+            ),
+          ),
+        ],
       ),
     );
   }

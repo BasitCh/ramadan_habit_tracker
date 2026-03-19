@@ -92,6 +92,9 @@ import 'package:ramadan_habit_tracker/features/challenge/data/repositories/chall
 import 'package:ramadan_habit_tracker/features/challenge/domain/repositories/challenge_repository.dart';
 import 'package:ramadan_habit_tracker/features/challenge/presentation/bloc/challenge_bloc.dart';
 
+// Tasbeeh
+import 'package:ramadan_habit_tracker/features/tasbeeh/presentation/bloc/tasbeeh_bloc.dart';
+
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
@@ -283,6 +286,7 @@ Future<void> initDependencies() async {
       getSurahList: sl(),
       getSurahDetail: sl(),
       resetQuranProgress: sl(),
+      sharedPreferences: sl(),
     ),
   );
 
@@ -374,6 +378,12 @@ Future<void> initDependencies() async {
 
   // BLoC
   sl.registerFactory(() => ChallengeBloc(repository: sl()));
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // Tasbeeh Feature
+  // ══════════════════════════════════════════════════════════════════════════
+
+  sl.registerFactory(() => TasbeehBloc(sharedPreferences: sl()));
 
   // ══════════════════════════════════════════════════════════════════════════
   // Data Seeding

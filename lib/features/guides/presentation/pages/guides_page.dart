@@ -58,15 +58,6 @@ class GuidesPage extends StatelessWidget {
             ),
           ],
         ),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.grey.shade50,
-          ),
-          child: const Icon(Icons.search, color: Colors.grey),
-        ),
       ],
     );
   }
@@ -75,7 +66,7 @@ class GuidesPage extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push('/guides/last-10-days'),
       child: Container(
-        height: 210,
+        constraints: const BoxConstraints(minHeight: 190),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
         gradient: const LinearGradient(
@@ -202,40 +193,45 @@ class GuidesPage extends StatelessWidget {
   }
 
   Widget _buildGuideGrid(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _GuideCard(
-            onTap: () => context.push('/guides/tahajjud'),
-            icon: Icons.nights_stay,
-            iconColor: Colors.white,
-            iconBg: const LinearGradient(
-              colors: [AppColors.secondary, AppColors.accent],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+    // IntrinsicHeight makes both cards the same height as the taller one,
+    // avoiding overflow when text wraps differently on small screens.
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _GuideCard(
+              onTap: () => context.push('/guides/tahajjud'),
+              icon: Icons.nights_stay,
+              iconColor: Colors.white,
+              iconBg: const LinearGradient(
+                colors: [AppColors.secondary, AppColors.accent],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              title: 'Tahajjud Guide',
+              subtitle: 'DEEP SLEEP & PRAYER',
+              subtitleColor: AppColors.secondary,
+              borderColor: AppColors.secondary.withValues(alpha: 0.15),
             ),
-            title: 'Tahajjud\nGuide',
-            subtitle: 'DEEP SLEEP & PRAYER',
-            subtitleColor: AppColors.secondary,
-            borderColor: AppColors.secondary.withValues(alpha: 0.15),
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _GuideCard(
-            onTap: () => context.push('/guides/zakat'),
-            icon: Icons.calculate,
-            iconColor: AppColors.primary,
-            iconBg: LinearGradient(
-              colors: [AppColors.primary.withValues(alpha: 0.1), AppColors.primary.withValues(alpha: 0.05)],
+          const SizedBox(width: 16),
+          Expanded(
+            child: _GuideCard(
+              onTap: () => context.push('/guides/zakat'),
+              icon: Icons.calculate,
+              iconColor: AppColors.primary,
+              iconBg: LinearGradient(
+                colors: [AppColors.primary.withValues(alpha: 0.1), AppColors.primary.withValues(alpha: 0.05)],
+              ),
+              title: 'Zakat Calculator',
+              subtitle: 'WEALTH PURIFIER',
+              subtitleColor: Colors.grey,
+              borderColor: AppColors.primary.withValues(alpha: 0.1),
             ),
-            title: 'Zakat\nCalculator',
-            subtitle: 'WEALTH PURIFIER',
-            subtitleColor: Colors.grey,
-            borderColor: AppColors.primary.withValues(alpha: 0.1),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -325,11 +321,9 @@ class _GuideCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -362,15 +356,17 @@ class _GuideCard extends StatelessWidget {
               ),
               child: Icon(icon, color: iconColor, size: 24),
             ),
+            const SizedBox(height: 16),
             Text(
               title,
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w800,
                 height: 1.2,
                 color: AppColors.textPrimary,
               ),
             ),
+            const SizedBox(height: 6),
             Text(
               subtitle,
               style: TextStyle(
@@ -381,7 +377,6 @@ class _GuideCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
         ),
       ),
     );

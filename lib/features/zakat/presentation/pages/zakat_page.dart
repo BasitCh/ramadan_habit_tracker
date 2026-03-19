@@ -9,6 +9,23 @@ class ZakatPage extends StatefulWidget {
   State<ZakatPage> createState() => _ZakatPageState();
 }
 
+const _currencies = [
+  {'code': 'USD', 'symbol': '\$', 'name': 'US Dollar'},
+  {'code': 'EUR', 'symbol': '€', 'name': 'Euro'},
+  {'code': 'GBP', 'symbol': '£', 'name': 'British Pound'},
+  {'code': 'PKR', 'symbol': '₨', 'name': 'Pakistani Rupee'},
+  {'code': 'INR', 'symbol': '₹', 'name': 'Indian Rupee'},
+  {'code': 'BDT', 'symbol': '৳', 'name': 'Bangladeshi Taka'},
+  {'code': 'SAR', 'symbol': '﷼', 'name': 'Saudi Riyal'},
+  {'code': 'AED', 'symbol': 'د.إ', 'name': 'UAE Dirham'},
+  {'code': 'MYR', 'symbol': 'RM', 'name': 'Malaysian Ringgit'},
+  {'code': 'IDR', 'symbol': 'Rp', 'name': 'Indonesian Rupiah'},
+  {'code': 'TRY', 'symbol': '₺', 'name': 'Turkish Lira'},
+  {'code': 'EGP', 'symbol': 'E£', 'name': 'Egyptian Pound'},
+  {'code': 'CAD', 'symbol': 'C\$', 'name': 'Canadian Dollar'},
+  {'code': 'AUD', 'symbol': 'A\$', 'name': 'Australian Dollar'},
+];
+
 class _ZakatPageState extends State<ZakatPage> {
   final _cashController = TextEditingController();
   final _metaController = TextEditingController(); // Gold/Silver
@@ -20,6 +37,7 @@ class _ZakatPageState extends State<ZakatPage> {
   double _totalLiabilities = 0;
   double _netAssets = 0;
   double _zakatDue = 0;
+  Map<String, String> _selectedCurrency = _currencies[0];
 
   @override
   void dispose() {
@@ -64,6 +82,32 @@ class _ZakatPageState extends State<ZakatPage> {
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: DropdownButton<Map<String, String>>(
+              value: _selectedCurrency,
+              underline: const SizedBox.shrink(),
+              icon: const Icon(Icons.arrow_drop_down, color: AppColors.textPrimary),
+              items: _currencies.map((currency) {
+                return DropdownMenuItem(
+                  value: currency,
+                  child: Text(
+                    '${currency['symbol']}  ${currency['code']}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) setState(() => _selectedCurrency = val);
+              },
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -110,7 +154,7 @@ class _ZakatPageState extends State<ZakatPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            '\$${_zakatDue.toStringAsFixed(2)}',
+            '${_selectedCurrency['symbol']}${_zakatDue.toStringAsFixed(2)}',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 36,
@@ -123,11 +167,11 @@ class _ZakatPageState extends State<ZakatPage> {
             children: [
               _buildResultItem(
                 'Net Assets',
-                '\$${_netAssets.toStringAsFixed(2)}',
+                '${_selectedCurrency['symbol']}${_netAssets.toStringAsFixed(2)}',
               ),
               _buildResultItem(
                 'Liabilities',
-                '\$${_totalLiabilities.toStringAsFixed(2)}',
+                '${_selectedCurrency['symbol']}${_totalLiabilities.toStringAsFixed(2)}',
               ),
             ],
           ),
@@ -225,7 +269,7 @@ class _ZakatPageState extends State<ZakatPage> {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
         labelText: label,
-        prefixText: '\$ ',
+        prefixText: '${_selectedCurrency['symbol']} ',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade300),

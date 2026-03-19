@@ -238,6 +238,21 @@ class _QuranProgressPageState extends State<QuranProgressPage> {
                     if (text.isNotEmpty) {
                       final pages = int.tryParse(text);
                       if (pages != null && pages > 0) {
+                        final state = context.read<QuranBloc>().state;
+                        final currentPage = state is QuranLoaded
+                            ? (state.progress?.currentPage ?? 0)
+                            : 0;
+                        if (currentPage + pages > 604) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Cannot exceed 604 pages. You have ${604 - currentPage} pages remaining.',
+                              ),
+                              backgroundColor: Colors.red.shade600,
+                            ),
+                          );
+                          return;
+                        }
                         context.read<QuranBloc>().add(
                           UpdatePagesReadRequested(pages),
                         );
@@ -305,67 +320,180 @@ class _QuranProgressPageState extends State<QuranProgressPage> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Surah Library',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          ...surahList.map(
-            (surah) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: ClayCard(
-                onTap: () => context.push('/quran/surah/${surah.number}'),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Center(
-                        child: Text(
-                          surah.number.toString(),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+          // Bookmarked surahs section
+          if (state.bookmarkedSurahs.isNotEmpty) ...[
+            const Text(
+              'Bookmarked Surahs',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: state.bookmarkedSurahs.map((number) {
+                  final surah = surahList.where((s) => s.number == number).firstOrNull;
+                  if (surah == null) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () => context.push('/quran/surah/${surah.number}'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.bookmark, size: 14, color: AppColors.primary),
+                            const SizedBox(width: 4),
+                            Text(
+                              surah.englishName,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            surah.englishName,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${surah.englishNameTranslation} • ${surah.numberOfAyahs} ayahs',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      surah.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                }).toList(),
               ),
             ),
+            const SizedBox(height: 24),
+          ],
+          Row(
+            children: [
+              const Text(
+                'Surah Library',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              if (state.lastReadSurahNumber != null) ...[
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => context.push('/quran/surah/${state.lastReadSurahNumber}'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.history, size: 13, color: AppColors.secondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Continue reading',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.secondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...surahList.map(
+            (surah) {
+              final isLastRead = surah.number == state.lastReadSurahNumber;
+              final isBookmarked = state.bookmarkedSurahs.contains(surah.number);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: ClayCard(
+                  onTap: () => context.push('/quran/surah/${surah.number}'),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: isLastRead
+                              ? AppColors.secondary.withValues(alpha: 0.15)
+                              : AppColors.primaryLight,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Center(
+                          child: Text(
+                            surah.number.toString(),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isLastRead ? AppColors.secondary : null,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              surah.englishName,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (isLastRead) ...[
+                              const SizedBox(height: 3),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.secondary.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'Last Read',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.secondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 2),
+                            Text(
+                              '${surah.englishNameTranslation} • ${surah.numberOfAyahs} ayahs',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isBookmarked)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: Icon(Icons.bookmark, size: 18, color: AppColors.primary),
+                        ),
+                      Text(
+                        surah.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 100),
         ],
@@ -402,6 +530,21 @@ class _QuranProgressPageState extends State<QuranProgressPage> {
     return Expanded(
       child: GestureDetector(
         onTap: () {
+          final state = context.read<QuranBloc>().state;
+          final currentPage = state is QuranLoaded
+              ? (state.progress?.currentPage ?? 0)
+              : 0;
+          if (currentPage + pages > 604) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Cannot exceed 604 pages. You have ${604 - currentPage} pages remaining.',
+                ),
+                backgroundColor: Colors.red.shade600,
+              ),
+            );
+            return;
+          }
           context.read<QuranBloc>().add(UpdatePagesReadRequested(pages));
         },
         child: Container(

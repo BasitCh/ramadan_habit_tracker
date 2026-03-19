@@ -34,39 +34,30 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
     LoadPrayerTimesRequested event,
     Emitter<PrayerState> emit,
   ) async {
-    // 1. Emit loading initially
-    if (state is! PrayerLoaded) {
-      emit(const PrayerLoading());
+    emit(const PrayerLoading());
+
+    // 1. Location is required — request it first
+    final locationResult = await locationService.getCurrentLocation();
+
+    if (locationResult.isLeft()) {
+      final failure = locationResult.fold((f) => f, (_) => null)!;
+      emit(PrayerLocationPermissionRequired(message: failure.message));
+      return;
     }
 
-    // 2. Try to load cached data for immediate display
-    // We do this concurrently to be fast
-    final cachedLocation = await locationService.getLastKnownLocation();
+    final loc = locationResult.fold((_) => null, (l) => l)!;
+    final lat = loc.lat;
+    final lng = loc.lng;
+    final locationLabel = loc.city != null
+        ? '${loc.city}${loc.country != null ? ', ${loc.country}' : ''}'
+        : '${lat.toStringAsFixed(2)}°, ${lng.toStringAsFixed(2)}°';
+
+    // 2. Show cached times immediately while fetching fresh data
     final cachedTimesResult = await repository.getCachedPrayerTimes();
-
-    // Default location (London) if nothing cached
-    double lat = 51.5074;
-    double lng = -0.1278;
-    String locationLabel =
-        '${AppConstants.defaultCity}, ${AppConstants.defaultCountry}';
-
-    if (cachedLocation != null) {
-      lat = cachedLocation.lat;
-      lng = cachedLocation.lng;
-      locationLabel =
-          cachedLocation.city != null && cachedLocation.country != null
-          ? '${cachedLocation.city}, ${cachedLocation.country}'
-          : '${AppConstants.defaultCity}, ${AppConstants.defaultCountry}';
-    }
-
-    // If we have cached times, emit them immediately
     if (cachedTimesResult.isRight()) {
-      final cachedTimes = cachedTimesResult.getOrElse(
-        () => throw 'Unreachable',
-      );
+      final cachedTimes = cachedTimesResult.getOrElse(() => throw 'Unreachable');
       final logResult = await repository.getPrayerLog(DateTime.now());
       final streakResult = await repository.getPrayerStreak();
-
       final log = logResult.getOrElse(
         () => PrayerLog(
           date: DateTime.now(),
@@ -75,36 +66,19 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
           },
         ),
       );
-      final streak = streakResult.fold((_) => null, (s) => s);
-
       emit(
         PrayerLoaded(
           prayerTimes: cachedTimes.prayerTimes,
           prayerLog: log,
-          streak: streak,
+          streak: streakResult.fold((_) => null, (s) => s),
           hijriDate: cachedTimes.hijriDate,
           locationLabel: locationLabel,
         ),
       );
     }
 
-    // 3. Fetch Fresh Data (Location & Times)
+    // 3. Fetch fresh prayer times
     try {
-      final locationResult = await locationService.getCurrentLocation();
-
-      locationResult.fold(
-        (failure) {
-          // If location fails, stick with cached/default lat/lng
-        },
-        (loc) {
-          lat = loc.lat;
-          lng = loc.lng;
-          locationLabel = loc.city != null && loc.country != null
-              ? '${loc.city}, ${loc.country}'
-              : '${AppConstants.defaultCity}, ${AppConstants.defaultCountry}';
-        },
-      );
-
       final timesResult = await getPrayerTimes(
         GetPrayerTimesParams(
           lat: lat,
@@ -114,13 +88,11 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
         ),
       );
 
-      // Re-fetch logs/streak to ensure they are consistent
       final logResult = await repository.getPrayerLog(DateTime.now());
       final streakResult = await repository.getPrayerStreak();
 
       timesResult.fold(
         (failure) {
-          // Only emit error if we don't have cached data shown
           if (state is! PrayerLoaded) {
             emit(PrayerError(failure.message));
           }
@@ -135,16 +107,12 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
             ),
             (log) => log,
           );
-          final streak = streakResult.fold((_) => null, (s) => s);
-
-          // Schedule notifications for upcoming prayers
           _schedulePrayerNotifications(result.prayerTimes);
-
           emit(
             PrayerLoaded(
               prayerTimes: result.prayerTimes,
               prayerLog: log,
-              streak: streak,
+              streak: streakResult.fold((_) => null, (s) => s),
               hijriDate: result.hijriDate,
               locationLabel: locationLabel,
             ),

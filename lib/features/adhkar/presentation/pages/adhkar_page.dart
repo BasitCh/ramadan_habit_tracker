@@ -191,12 +191,12 @@ class _AdhkarPageState extends State<AdhkarPage> with SingleTickerProviderStateM
                       style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary, letterSpacing: 0.5),
                     ),
                   ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.volume_up, size: 18, color: AppColors.textSecondary),
-                  constraints: const BoxConstraints(),
-                  padding: EdgeInsets.zero,
-                ),
+                // IconButton(
+                //   onPressed: () {},
+                //   icon: const Icon(Icons.volume_up, size: 18, color: AppColors.textSecondary),
+                //   constraints: const BoxConstraints(),
+                //   padding: EdgeInsets.zero,
+                // ),
               ],
             ),
 

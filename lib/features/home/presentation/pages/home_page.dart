@@ -121,9 +121,9 @@ class _HomePageState extends State<HomePage> {
   Widget _buildHeroCard(BuildContext context) {
     return BlocBuilder<PrayerBloc, PrayerState>(
       builder: (context, state) {
-        String nextPrayerName = 'Maghrib';
-        String countdown = '2h 14m';
-        String locationLabel = 'London, UK';
+        String nextPrayerName = '—';
+        String countdown = '—';
+        String locationLabel = '';
         String hijriBadge = 'Hijri Date';
 
         if (state is PrayerLoaded) {
@@ -132,7 +132,7 @@ class _HomePageState extends State<HomePage> {
             nextPrayerName = next.name;
             countdown = _formatCountdown(next.time);
           }
-          locationLabel = state.locationLabel ?? locationLabel;
+          locationLabel = state.locationLabel ?? '';
 
           final now = DateTime.now();
           final start = AppConstants.ramadanStart;
@@ -195,24 +195,25 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on,
-                          size: 14,
-                          color: Colors.white.withValues(alpha: 0.8),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          locationLabel,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                    if (locationLabel.isNotEmpty)
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            size: 14,
                             color: Colors.white.withValues(alpha: 0.8),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 4),
+                          Text(
+                            locationLabel,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
                 Positioned(
@@ -468,6 +469,9 @@ class _HomePageState extends State<HomePage> {
         }
 
         final challenge = state.challenge;
+        final isPostRamadan = AppConstants.isPostRamadan;
+        final cardTitle = isPostRamadan ? 'Keep the Spirit Alive' : 'Daily Challenge';
+        final challengeLabel = isPostRamadan ? 'SHAWWAL HABIT' : "TODAY'S CHALLENGE";
 
         return Container(
           padding: const EdgeInsets.all(24),
@@ -492,7 +496,7 @@ class _HomePageState extends State<HomePage> {
                 top: 0,
                 right: 0,
                 child: Icon(
-                  Icons.military_tech,
+                  isPostRamadan ? Icons.auto_awesome : Icons.military_tech,
                   size: 64,
                   color: Colors.white.withValues(alpha: 0.1),
                 ),
@@ -502,10 +506,10 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Daily Challenge',
-                          style: TextStyle(
+                          cardTitle,
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -535,7 +539,7 @@ class _HomePageState extends State<HomePage> {
                           Text(
                             'Day $_selectedChallengeDay',
                             style: const TextStyle(
-                              fontSize: 12, // Reduced size slightly for space
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
@@ -555,9 +559,30 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
+                  if (isPostRamadan) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Ramadan is over — keep your good habits going in Shawwal.',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   Text(
-                    "TODAY'S CHALLENGE",
+                    challengeLabel,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,

@@ -73,3 +73,12 @@ class PrayerError extends PrayerState {
   @override
   List<Object> get props => [message];
 }
+
+class PrayerLocationPermissionRequired extends PrayerState {
+  final String message;
+
+  const PrayerLocationPermissionRequired({required this.message});
+
+  @override
+  List<Object> get props => [message];
+}
